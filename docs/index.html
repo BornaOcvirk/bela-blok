@@ -6,72 +6,88 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="Bela Blok">
-<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<meta name="theme-color" content="#1b4332">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="theme-color" media="(prefers-color-scheme: light)" content="#fbf8ef">
+<meta name="theme-color" media="(prefers-color-scheme: dark)" content="#141612">
 <link rel="manifest" href="manifest.json">
 <link rel="apple-touch-icon" href="icon-180.png">
 <link rel="icon" href="icon-180.png">
 <title>Bela Blok</title>
 <style>
-:root{--bg:#f4f2ea;--card:#fff;--text:#1d1c17;--muted:#6d6b62;--line:#e1ddd0;--green:#2d6a4f;--green-strong:#1b4332;--on-green:#fff;--soft:#e3efe7;--bad:#b3392b;color-scheme:light}
-@media (prefers-color-scheme:dark){:root:not([data-theme=light]){--bg:#11130f;--card:#1b1e19;--text:#ebeae2;--muted:#9b9a90;--line:#2d3229;--green:#3f8f68;--green-strong:#1b4332;--on-green:#fff;--soft:#1f3328;--bad:#e46a5c;color-scheme:dark}}
-:root[data-theme=dark]{--bg:#11130f;--card:#1b1e19;--text:#ebeae2;--muted:#9b9a90;--line:#2d3229;--green:#3f8f68;--green-strong:#1b4332;--on-green:#fff;--soft:#1f3328;--bad:#e46a5c;color-scheme:dark}
+:root{--paper:#fbf8ef;--ink:#1b1b18;--soft:#6f6a5c;--rule:#b9cde0;--margin:#d0574f;--green:#1f5a3c;--on-green:#fbf8ef;--bad:#b3261e;color-scheme:light}
+@media (prefers-color-scheme:dark){:root:not([data-theme=light]){--paper:#141612;--ink:#ecebe2;--soft:#9c9a8e;--rule:#2f3d35;--margin:#8a3a33;--green:#6fbf8f;--on-green:#141612;--bad:#ef7a6e;color-scheme:dark}}
+:root[data-theme=dark]{--paper:#141612;--ink:#ecebe2;--soft:#9c9a8e;--rule:#2f3d35;--margin:#8a3a33;--green:#6fbf8f;--on-green:#141612;--bad:#ef7a6e;color-scheme:dark}
 *{box-sizing:border-box}
-body{margin:0;background:var(--bg);color:var(--text);font:16px/1.4 -apple-system,BlinkMacSystemFont,"Segoe UI",system-ui,sans-serif;padding-bottom:calc(72px + env(safe-area-inset-bottom));-webkit-tap-highlight-color:transparent}
-header{position:sticky;top:0;z-index:2;display:flex;align-items:center;justify-content:space-between;padding:calc(10px + env(safe-area-inset-top)) 16px 10px;background:var(--green-strong);color:#fff}
-h1{margin:0;font-size:20px;letter-spacing:.5px}
-header button{background:none;border:1px solid #ffffff55;color:#fff;border-radius:10px;font-size:18px;width:40px;height:36px;cursor:pointer}
-main{max-width:640px;margin:0 auto;padding:12px 16px}
-.card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:14px;margin-bottom:12px}
-h2{margin:0 0 10px;font-size:18px}
-label{display:block;font-size:13px;color:var(--muted);margin:12px 0 6px}
-.row{display:flex;gap:8px}.row>*{flex:1;min-width:0}
-input,select{font:inherit;font-size:16px;width:100%;padding:10px 12px;border:1px solid var(--line);border-radius:10px;background:var(--bg);color:var(--text)}
-input[type=number]{text-align:center;font-size:20px;font-weight:700}
+html,body{background:var(--paper)}
+body{margin:0;color:var(--ink);font:700 18px/1.35 "Times New Roman",Times,serif;padding-bottom:calc(64px + env(safe-area-inset-bottom));-webkit-tap-highlight-color:transparent}
+body::before{content:"";position:fixed;top:0;bottom:0;left:30px;width:2px;background:var(--margin);opacity:.75;pointer-events:none}
+button,input,select{font:inherit;color:inherit}
+header{display:flex;align-items:flex-end;justify-content:space-between;max-width:640px;margin:0 auto;padding:calc(14px + env(safe-area-inset-top)) 16px 4px 42px}
+h1{margin:0;font-size:30px;line-height:1.1;color:var(--green);border-bottom:4px double var(--green)}
+.theme{background:none;border:0;font-size:17px;padding:4px 0 4px 8px;color:var(--soft);text-decoration:underline;cursor:pointer}
+main{max-width:640px;margin:0 auto;padding:8px 16px 16px 42px}
+h2{margin:18px 0 8px;font-size:22px;color:var(--green)}
+.lbl{display:block;font-size:15px;color:var(--soft);margin:14px 0 4px}
+.muted{color:var(--soft)}.small{font-size:15px}.center{text-align:center}.bad{color:var(--bad)}
+.row{display:flex;gap:10px;align-items:center}.row>*{flex:1;min-width:0}
+input,select{width:100%;padding:8px 2px;border:0;border-bottom:2px solid var(--ink);border-radius:0;background:transparent;font-size:18px;-webkit-appearance:none;appearance:none}
+input[type=number]{text-align:center;font-size:28px}
 input::-webkit-inner-spin-button{-webkit-appearance:none}
-.btn{font:inherit;font-weight:600;border:0;border-radius:10px;padding:12px 14px;background:var(--green);color:var(--on-green);cursor:pointer}
-.btn.big{width:100%;margin-top:14px;padding:14px}
-.btn.ghost{background:transparent;color:var(--text);border:1px solid var(--line)}
-.btn.sm{padding:6px 12px;font-size:13px}
-.seg label{margin:0;position:relative}.seg input{position:absolute;opacity:0}
-.seg span,.opt{display:block;width:100%;text-align:center;padding:10px;border:1px solid var(--line);border-radius:10px;color:var(--text);background:transparent;font:inherit;font-size:15px;cursor:pointer;overflow-wrap:anywhere}
-.seg input:checked+span,.opt.on{background:var(--green);color:var(--on-green);border-color:var(--green)}
-.seg input:focus-visible+span{outline:2px solid var(--green);outline-offset:2px}
-.board{display:grid;grid-template-columns:1fr 1fr;gap:12px;text-align:center}
-.tn{font-size:14px;color:var(--muted);font-weight:600;overflow-wrap:anywhere}
-.tot{font-size:46px;font-weight:800;font-variant-numeric:tabular-nums;line-height:1.1}
-.bar{height:6px;background:var(--line);border-radius:3px;overflow:hidden;margin:6px 0 10px}.bar i{display:block;height:100%;background:var(--green)}
-.sides{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:12px}
-.zv,.list{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}
-.chip{font:inherit;font-size:14px;padding:8px 10px;border-radius:999px;border:1px solid var(--green);background:transparent;color:var(--text);cursor:pointer}
-.chip.on{background:var(--green);color:var(--on-green)}
-.pill{font:inherit;font-size:13px;padding:4px 10px;border-radius:999px;border:0;background:var(--soft);color:var(--text);cursor:pointer}
-.preview{text-align:center;font-size:22px;font-weight:700;margin:14px 0;font-variant-numeric:tabular-nums}
-table{width:100%;border-collapse:collapse;font-variant-numeric:tabular-nums}
-th,td{padding:8px 4px;border-bottom:1px solid var(--line);text-align:center}
-th{font-size:13px;color:var(--muted);font-weight:600}
-.tag{font-size:11px;padding:2px 6px;border-radius:6px;background:var(--soft);font-weight:600}
-.bad,.btn.bad{color:var(--bad)}.btn:disabled{opacity:.4}.muted{color:var(--muted)}.center{text-align:center}.small{font-size:13px}
-.flash{background:var(--green);color:var(--on-green);border-radius:14px;padding:16px;text-align:center;margin-bottom:12px;font-weight:700;font-size:18px}
-nav{position:fixed;bottom:0;left:0;right:0;display:flex;background:var(--card);border-top:1px solid var(--line);padding-bottom:env(safe-area-inset-bottom)}
-nav button{flex:1;font:inherit;font-size:20px;background:none;border:0;padding:8px 0;color:var(--muted);display:flex;flex-direction:column;align-items:center;cursor:pointer}
-nav span{font-size:12px}nav button.on{color:var(--green);font-weight:700}
-.ph{display:flex;justify-content:space-between;align-items:center}
-.icon{background:none;border:0;font-size:18px;padding:4px 8px;color:var(--text);cursor:pointer}
-.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-top:10px;text-align:center}
-.stats span{display:block;font-size:18px;font-weight:700}.stats small{color:var(--muted);font-size:11px}
-.hrow{display:flex;justify-content:space-between;padding:4px 0}.hrow.win{font-weight:700;color:var(--green)}
-.link{background:none;border:0;color:var(--bad);font:inherit;font-size:13px;padding:6px 0 0;cursor:pointer}
-:focus-visible{outline:2px solid var(--green);outline-offset:2px}
+input::placeholder{color:var(--soft);opacity:.6}
+.btn{border:2px solid var(--ink);background:transparent;border-radius:4px;padding:10px 12px;font-size:18px;cursor:pointer}
+.btn.main{background:var(--green);border-color:var(--green);color:var(--on-green)}
+.btn.red{border-color:var(--bad);color:var(--bad)}
+.btn.on{background:var(--ink);color:var(--paper)}
+.btn:disabled{opacity:.35}
+.wide{padding:14px;font-size:20px}
+.link{background:none;border:0;padding:6px 0;font-size:16px;text-decoration:underline;cursor:pointer}
+.pick label{position:relative}.pick input{position:absolute;opacity:0}
+.pick span{display:block;text-align:center;border:2px solid var(--ink);border-radius:4px;padding:8px;cursor:pointer}
+.pick input:checked+span{background:var(--ink);color:var(--paper)}
+.pick input:focus-visible+span{outline:2px dashed var(--green);outline-offset:2px}
+/* score sheet */
+.sheet{width:100%;border-collapse:collapse;table-layout:fixed;font-variant-numeric:tabular-nums}
+.sheet th,.sheet td{text-align:center;padding:0 4px;border-bottom:1px solid var(--rule)}
+.sheet th+th,.sheet td+td{border-left:2px solid var(--ink)}
+.sheet th{font-size:32px;line-height:1;padding-top:8px;border-bottom:2px solid var(--ink)}
+.sheet th small{display:block;font-size:14px;color:var(--soft);padding:4px 0 6px;overflow-wrap:anywhere}
+.sheet td{font-size:24px;height:40px}
+.sheet sup{font-size:12px;color:var(--soft);margin-left:2px}
+.sheet .zv{font-size:13px;color:var(--green);margin-left:4px}
+.sheet .tot td{font-size:36px;height:58px;border-top:5px double var(--ink);border-bottom:0}
+.note{text-align:center;color:var(--soft);font-size:14px;margin:4px 0 0}
+/* hand entry */
+.entry{border:2px solid var(--ink);border-radius:4px;padding:4px 12px 12px;margin-top:16px}
+.cols{display:grid;grid-template-columns:1fr 1fr;gap:14px}.cols>div{min-width:0}
+.colh{text-align:center;font-size:24px;margin-top:6px}
+.chips{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px}
+.chip{border:1.5px solid var(--ink);background:transparent;border-radius:4px;padding:6px 8px;font-size:16px;cursor:pointer}
+.chip.on{background:var(--ink);color:var(--paper)}
+.chip.red{border-color:var(--bad);color:var(--bad)}
+.listed{display:flex;flex-wrap:wrap;gap:4px 10px;margin-top:6px}
+.listed button{border:0;background:none;padding:2px 0;color:var(--green);font-size:16px;text-decoration:underline;cursor:pointer}
+.preview{text-align:center;font-size:26px;margin:14px 0 10px;font-variant-numeric:tabular-nums}
+.flash{border:4px double var(--green);color:var(--green);text-align:center;padding:14px;font-size:22px;margin:8px 0 12px}
+/* lists */
+.line{border-bottom:1px solid var(--rule);padding:10px 0}
+.line .top{display:flex;justify-content:space-between;align-items:baseline;gap:8px}
+.name{font-size:22px;overflow-wrap:anywhere}
+.st{font-size:15px;color:var(--soft);margin-top:2px}
+.icon{background:none;border:0;font-size:18px;padding:4px 6px;cursor:pointer}
+.hrow{display:flex;justify-content:space-between;gap:8px;font-size:19px}.hrow.win{color:var(--green)}
+nav{position:fixed;bottom:0;left:0;right:0;display:flex;justify-content:center;background:var(--paper);border-top:2px solid var(--ink);padding-bottom:env(safe-area-inset-bottom)}
+nav button{flex:1;max-width:200px;background:none;border:0;padding:14px 0;font-size:19px;color:var(--soft);cursor:pointer}
+nav button.on{color:var(--ink);text-decoration:underline;text-underline-offset:5px;text-decoration-thickness:2px}
+:focus-visible{outline:2px dashed var(--green);outline-offset:2px}
 </style>
 </head>
 <body>
-<header><h1>♣ Bela Blok</h1><button id="themeBtn" onclick="cycleTheme()" aria-label="Promijeni temu (auto / svijetla / tamna)">◐</button></header>
+<header><h1>Bela Blok</h1><button id="themeBtn" class="theme" onclick="cycleTheme()" aria-label="Promijeni temu (auto / dan / noć)">auto</button></header>
 <main id="app"></main>
 <nav>
-  <button data-v="game" onclick="go('game')">🃏<span>Igra</span></button>
-  <button data-v="players" onclick="go('players')">👥<span>Igrači</span></button>
-  <button data-v="history" onclick="go('history')">📜<span>Povijest</span></button>
+  <button data-v="game" onclick="go('game')">Igra</button>
+  <button data-v="players" onclick="go('players')">Igrači</button>
+  <button data-v="history" onclick="go('history')">Povijest</button>
 </nav>
 <script src="bela.js"></script>
 <script>
@@ -81,19 +97,20 @@ try { db = JSON.parse(localStorage.getItem(KEY)); } catch {}
 db = db || { players: [], games: [], theme: 'auto' };
 const save = () => { try { localStorage.setItem(KEY, JSON.stringify(db)); } catch { alert('Spremanje nije uspjelo!'); } };
 
-let view = 'game', draft = null, flash = '';
+let view = 'game', draft = null, flash = '', pickBelot = false;
 const $ = s => document.querySelector(s);
 const esc = s => String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 const uid = () => Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
 const sum = a => a.reduce((x, y) => x + y, 0);
 const pname = id => db.players.find(p => p.id === id)?.name ?? '?';
 const teamName = tm => tm.map(pname).join(' & ');
+const MV = i => i ? 'VI' : 'MI';
 const active = () => db.games.find(g => winner(g) == null);
 const zvOf = (h, i) => sum(h.zv[i]) + h.bela[i] * 20;
 
 function applyTheme() {
   document.documentElement.dataset.theme = db.theme;
-  $('#themeBtn').textContent = { auto: '◐', light: '☀', dark: '☾' }[db.theme];
+  $('#themeBtn').textContent = { auto: 'auto', light: 'dan', dark: 'noć' }[db.theme];
 }
 function cycleTheme() { db.theme = { auto: 'light', light: 'dark', dark: 'auto' }[db.theme]; save(); applyTheme(); }
 
@@ -108,17 +125,17 @@ function render() {
 
 /* ---------- Igra ---------- */
 function newGameView() {
-  if (db.players.length < 4) return `<section class="card"><h2>Nova igra</h2>
-    <p class="muted">Za igru trebaju 4 igrača. Dodaj ih u kartici <b>Igrači</b>.</p>
-    <button class="btn" onclick="go('players')">Dodaj igrače</button></section>`;
+  if (db.players.length < 4) return `<h2>Nova igra</h2>
+    <p class="muted">Za igru trebaju 4 igrača. Upiši ih pod <u>Igrači</u>.</p>
+    <button class="btn main wide" style="width:100%" onclick="go('players')">Dodaj igrače</button>`;
   const opts = db.players.map(p => `<option value="${p.id}">${esc(p.name)}</option>`).join('');
   const sel = i => `<select id="p${i}" aria-label="Igrač ${i + 1}"><option value="">— igrač —</option>${opts}</select>`;
-  return `<section class="card"><h2>Nova igra</h2>
-    <label>Tim 1</label><div class="row">${sel(0)}${sel(1)}</div>
-    <label>Tim 2</label><div class="row">${sel(2)}${sel(3)}</div>
-    <label>Igra se do</label><div class="row seg">${[501, 701, 1001].map(t =>
+  return `<h2>Nova igra</h2>
+    <span class="lbl">MI</span><div class="row">${sel(0)}${sel(1)}</div>
+    <span class="lbl">VI</span><div class="row">${sel(2)}${sel(3)}</div>
+    <span class="lbl">Igra se do</span><div class="row pick">${[501, 701, 1001].map(t =>
       `<label><input type="radio" name="target" value="${t}" ${t === 1001 ? 'checked' : ''}><span>${t}</span></label>`).join('')}</div>
-    <button class="btn big" onclick="startGame()">Započni igru</button></section>`;
+    <button class="btn main wide" style="width:100%;margin-top:20px" onclick="startGame()">Počni igru</button>`;
 }
 function startGame() {
   const ids = [0, 1, 2, 3].map(i => $('#p' + i).value);
@@ -130,45 +147,54 @@ function startGame() {
 
 function gameView(g) {
   const t = totals(g.hands);
-  const board = [0, 1].map(i => `<div>
-      <div class="tn">${esc(teamName(g.teams[i]))}</div>
-      <div class="tot">${t[i]}</div>
-      <div class="bar"><i style="width:${Math.min(100, t[i] / g.target * 100)}%"></i></div>
-      <button class="btn ghost sm" onclick="belot(${i})">Belot!</button></div>`).join('');
-  const rows = g.hands.map((h, n) => `<tr><td class="muted">${n + 1}</td>${[0, 1].map(i => `<td>
-      <b>${h.score[i]}</b>${h.caller === i ? ' <span class="tag" title="zvali adut">Z</span>' : ''}
-      ${h.fell && h.caller === i ? ' <span class="tag bad">pad</span>' : ''}
-      ${h.stiglja === i ? ' <span class="tag">štiglja</span>' : ''}
-      ${zvOf(h, i) ? ` <small class="muted">+${zvOf(h, i)}</small>` : ''}</td>`).join('')}</tr>`).reverse().join('');
-  return `<section class="card"><div class="board">${board}</div>
-      <p class="muted center small" style="margin:10px 0 0">Igra do ${g.target}</p></section>
-    ${draft ? handForm(g) : `<button class="btn big" style="margin:0 0 12px" onclick="newHand()">+ Nova ruka</button>`}
-    ${g.hands.length ? `<section class="card"><table><thead><tr><th>#</th><th>${esc(teamName(g.teams[0]))}</th><th>${esc(teamName(g.teams[1]))}</th></tr></thead><tbody>${rows}</tbody></table></section>` : ''}
-    <div class="row">
-      <button class="btn ghost" onclick="undoHand()" ${g.hands.length ? '' : 'disabled'}>↶ Poništi ruku</button>
-      <button class="btn ghost bad" onclick="abandonGame()">Prekini igru</button></div>`;
+  const cell = (h, i) => {
+    const pad = h.fell && h.caller === i, z = zvOf(h, i);
+    if (pad) return '<td class="bad">0<sup class="bad">pad</sup></td>'; // fallen team loses its zvanja too
+    return `<td>${h.score[i]}${h.caller === i ? '<sup>*</sup>' : ''}${h.stiglja === i ? '<sup>Š</sup>' : ''}${z ? `<span class="zv">+${z}</span>` : ''}</td>`;
+  };
+  const rows = g.hands.map(h => `<tr>${cell(h, 0)}${cell(h, 1)}</tr>`);
+  while (rows.length < 6) rows.push('<tr><td></td><td></td></tr>'); // empty ruled lines, like paper
+  return `<table class="sheet">
+      <thead><tr>${[0, 1].map(i => `<th scope="col">${MV(i)}<small>${esc(teamName(g.teams[i]))}</small></th>`).join('')}</tr></thead>
+      <tbody>${rows.join('')}</tbody>
+      <tfoot><tr class="tot"><td>${t[0]}</td><td>${t[1]}</td></tr></tfoot></table>
+    <p class="note">do ${g.target} · * zvao adut · Š štiglja · +zvanja</p>
+    ${draft ? handForm(g) : `
+      <div class="row" style="margin-top:16px">
+        <button class="btn main wide" style="flex:2" onclick="newHand()">+ Upiši ruku</button>
+        <button class="btn red wide" aria-expanded="${pickBelot}" onclick="pickBelot=!pickBelot;render()">BELOT</button></div>
+      ${pickBelot ? `<div class="row" style="margin-top:10px"><span class="muted small" style="flex:0 0 auto">Belot za:</span>
+        ${[0, 1].map(i => `<button class="btn red" onclick="belot(${i})">${MV(i)}</button>`).join('')}</div>` : ''}`}
+    <div class="row" style="margin-top:14px">
+      <button class="link" style="text-align:left" onclick="undoHand()" ${g.hands.length ? '' : 'disabled'}>↶ poništi zadnju ruku</button>
+      <button class="link bad" style="text-align:right" onclick="abandonGame()">prekini igru</button></div>`;
 }
 
-function newHand() { draft = { caller: null, cards: ['', ''], zv: [[], []], bela: [0, 0], stiglja: null }; render(); }
+function newHand() {
+  draft = { caller: null, cards: ['', ''], zv: [[], []], bela: [0, 0], stiglja: null };
+  pickBelot = false; render();
+  $('.entry').scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
 function handForm(g) {
-  const d = draft, T = i => esc(teamName(g.teams[i]));
-  const side = i => `<div>
-    <div class="tn">${T(i)}</div>
-    <input id="c${i}" type="number" inputmode="numeric" min="0" max="162" placeholder="bodovi" aria-label="Bodovi ${T(i)}"
+  const d = draft;
+  const col = i => `<div>
+    <div class="colh">${MV(i)}</div>
+    <input id="c${i}" type="number" inputmode="numeric" min="0" max="162" placeholder="0" aria-label="Bodovi ${MV(i)}"
       value="${d.stiglja != null ? (d.stiglja === i ? 252 : 0) : d.cards[i]}" ${d.stiglja != null ? 'disabled' : ''} oninput="cardIn(${i},this.value)">
-    <div class="zv">${[20, 50, 100, 150, 200].map(v => `<button class="chip" onclick="addZv(${i},${v})">+${v}</button>`).join('')}
-      <button class="chip ${d.bela[i] ? 'on' : ''}" aria-pressed="${!!d.bela[i]}" onclick="toggle('bela',${i})">Bela</button>
-      <button class="chip ${d.stiglja === i ? 'on' : ''}" aria-pressed="${d.stiglja === i}" onclick="toggle('stiglja',${i})">Štiglja</button></div>
-    <div class="list">${d.zv[i].map((v, k) => `<button class="pill" onclick="rmZv(${i},${k})" aria-label="Ukloni zvanje ${v}">${v} ✕</button>`).join('')}</div>
+    <div class="chips">${[20, 50, 100, 150, 200].map(v => `<button class="chip" onclick="addZv(${i},${v})">+${v}</button>`).join('')}
+      <button class="chip ${d.bela[i] ? 'on' : ''}" aria-pressed="${!!d.bela[i]}" onclick="toggle('bela',${i})">bela</button>
+      <button class="chip ${d.stiglja === i ? 'on' : ''}" aria-pressed="${d.stiglja === i}" onclick="toggle('stiglja',${i})">štiglja</button>
+      <button class="chip red" onclick="belot(${i})">BELOT</button></div>
+    <div class="listed">${d.zv[i].map((v, k) => `<button onclick="rmZv(${i},${k})" aria-label="Ukloni zvanje ${v}">${v} ✕</button>`).join('')}</div>
   </div>`;
-  return `<section class="card"><h2>Ruka ${g.hands.length + 1}</h2>
-    <label>Tko je zvao adut?</label>
-    <div class="row">${[0, 1].map(i => `<button class="opt ${d.caller === i ? 'on' : ''}" onclick="draft.caller=${i};render()">${T(i)}</button>`).join('')}</div>
-    <label>Bodovi iz štihova (upiši jedan tim, drugi se računa sam) i zvanja</label>
-    <div class="sides">${side(0)}${side(1)}</div>
+  return `<div class="entry">
+    <span class="lbl">Tko je zvao adut?</span>
+    <div class="row">${[0, 1].map(i => `<button class="btn ${d.caller === i ? 'on' : ''}" aria-pressed="${d.caller === i}" onclick="draft.caller=${i};render()">${MV(i)}</button>`).join('')}</div>
+    <span class="lbl">Bodovi (drugi stupac se sam izračuna) i zvanja</span>
+    <div class="cols">${col(0)}${col(1)}</div>
     <div class="preview" id="preview">${previewText()}</div>
-    <div class="row"><button class="btn ghost" onclick="draft=null;render()">Odustani</button>
-      <button class="btn" onclick="saveHand()">Spremi ruku</button></div></section>`;
+    <div class="row"><button class="btn" onclick="draft=null;render()">Odustani</button>
+      <button class="btn main" onclick="saveHand()">Spremi</button></div></div>`;
 }
 function cardIn(i, v) {
   draft.cards[i] = v;
@@ -195,28 +221,28 @@ function buildHand() {
 function previewText() {
   const h = buildHand();
   return typeof h === 'string' ? `<span class="muted small">${h}</span>`
-    : `${h.score[0]} : ${h.score[1]}${h.fell ? ' <span class="bad">— PAD!</span>' : ''}`;
+    : `MI ${h.score[0]} : ${h.score[1]} VI${h.fell ? ' <span class="bad">— PAD!</span>' : ''}`;
 }
 function saveHand() {
   const h = buildHand(), g = active();
   if (typeof h === 'string') return alert(h);
   g.hands.push(h); draft = null; save();
   const w = winner(g);
-  if (w != null) flash = `🏆 Pobjeda: ${esc(teamName(g.teams[w]))}!`;
+  if (w != null) flash = `Pobjeda: ${MV(w)} — ${esc(teamName(g.teams[w]))}!`;
   render();
 }
 function belot(i) {
   const g = active();
-  if (!confirm(`BELOT za ${teamName(g.teams[i])}? Igra odmah završava pobjedom.`)) return;
-  g.belot = i; draft = null; save();
-  flash = `🏆 BELOT! Pobjeda: ${esc(teamName(g.teams[i]))}!`;
+  if (!confirm(`BELOT za ${MV(i)} (${teamName(g.teams[i])})? Igra odmah završava pobjedom.`)) return;
+  g.belot = i; draft = null; pickBelot = false; save();
+  flash = `BELOT! Pobjeda: ${MV(i)} — ${esc(teamName(g.teams[i]))}!`;
   render();
 }
 function undoHand() { if (confirm('Poništiti zadnju ruku?')) { active().hands.pop(); save(); render(); } }
 function abandonGame() {
   const g = active();
   if (!confirm('Prekinuti i obrisati ovu igru?')) return;
-  db.games = db.games.filter(x => x !== g); draft = null; save(); render();
+  db.games = db.games.filter(x => x !== g); draft = null; pickBelot = false; save(); render();
 }
 
 /* ---------- Igrači ---------- */
@@ -236,15 +262,15 @@ function stats(pid) {
 }
 function playersView() {
   const list = db.players.map(p => ({ p, s: stats(p.id) })).sort((a, b) => b.s.w - a.s.w).map(({ p, s }) => `
-    <div class="card"><div class="ph"><b>${esc(p.name)}</b><span>
+    <div class="line"><div class="top"><span class="name">${esc(p.name)}</span><span style="flex:0 0 auto">
       <button class="icon" onclick="renamePlayer('${p.id}')" aria-label="Preimenuj ${esc(p.name)}">✎</button>
-      <button class="icon" onclick="delPlayer('${p.id}')" aria-label="Obriši ${esc(p.name)}">🗑</button></span></div>
-      <div class="stats">${[['Igre', s.g], ['Pobjede', s.w], ['Uspjeh', s.g ? Math.round(s.w / s.g * 100) + '%' : '–'], ['Bodovi', s.pts],
-        ['Zvanja', s.zv], ['Belot', s.belot], ['Štiglje', s.st], ['Padovi', s.pad]].map(([k, v]) => `<div><span>${v}</span><small>${k}</small></div>`).join('')}</div></div>`).join('');
-  return `<section class="card"><h2>Igrači</h2>
-    <form class="row" onsubmit="addPlayer(event)"><input id="pname" placeholder="Ime igrača" maxlength="30" autocomplete="off" aria-label="Ime igrača">
-    <button class="btn" style="flex:0 0 auto">Dodaj</button></form></section>
-    ${list || '<p class="muted center">Još nema igrača.</p>'}`;
+      <button class="icon bad" onclick="delPlayer('${p.id}')" aria-label="Obriši ${esc(p.name)}">✕</button></span></div>
+      <div class="st">${s.g} igara · ${s.w} pobjeda${s.g ? ` (${Math.round(s.w / s.g * 100)}%)` : ''} · ${s.pts} bodova</div>
+      <div class="st">zvanja ${s.zv} · belot ${s.belot} · štiglje ${s.st} · padovi ${s.pad}</div></div>`).join('');
+  return `<h2>Igrači</h2>
+    <form class="row" onsubmit="addPlayer(event)"><input id="pname" placeholder="Upiši ime…" maxlength="30" autocomplete="off" aria-label="Ime igrača">
+    <button class="btn" style="flex:0 0 auto">Dodaj</button></form>
+    ${list || '<p class="muted">Još nema igrača.</p>'}`;
 }
 const nameTaken = (n, except) => db.players.some(p => p.id !== except && p.name.toLowerCase() === n.toLowerCase());
 function addPlayer(e) {
@@ -268,20 +294,20 @@ function delPlayer(id) {
 /* ---------- Povijest ---------- */
 function historyView() {
   const done = db.games.filter(g => winner(g) != null).reverse();
-  const backup = `<section class="card"><h2>Sigurnosna kopija</h2>
-    <p class="muted small" style="margin-top:0">Spremi sve igrače, igre i statistiku u datoteku (npr. u iCloud ili pošalji sebi), ili vrati podatke iz kopije.</p>
-    <div class="row"><button class="btn" onclick="exportBackup()">⬇ Izvezi</button>
-      <button class="btn ghost" onclick="$('#imp').click()">⬆ Uvezi</button>
-      ${window.Capacitor ? `<button class="btn ghost" onclick="const t=prompt('Zalijepi kopiju:');if(t)importText(t)">📋 Zalijepi</button>` : ''}</div>
-    <input type="file" id="imp" accept=".json,application/json" hidden onchange="importBackup(this)"></section>`;
-  if (!done.length) return backup + '<p class="muted center">Još nema završenih igara.</p>';
-  return backup + done.map(g => {
+  const games = done.map(g => {
     const t = totals(g.hands), w = winner(g);
-    return `<div class="card"><div class="muted small">${new Date(g.date).toLocaleString('hr-HR', { dateStyle: 'medium', timeStyle: 'short' })}
-      · do ${g.target} · ${g.hands.length} ruku${g.belot != null ? ' · <b>BELOT</b>' : ''}</div>
-      ${[0, 1].map(i => `<div class="hrow ${w === i ? 'win' : ''}"><span>${w === i ? '🏆 ' : ''}${esc(teamName(g.teams[i]))}</span><b>${t[i]}</b></div>`).join('')}
-      <button class="link" onclick="delGame('${g.id}')">Obriši igru</button></div>`;
+    return `<div class="line"><div class="st">${new Date(g.date).toLocaleString('hr-HR', { dateStyle: 'medium', timeStyle: 'short' })}
+      · do ${g.target} · ${g.hands.length} ruku${g.belot != null ? ' · BELOT' : ''}</div>
+      ${[0, 1].map(i => `<div class="hrow ${w === i ? 'win' : ''}"><span>${MV(i)} · ${esc(teamName(g.teams[i]))}${w === i ? ' ✓' : ''}</span><span>${t[i]}</span></div>`).join('')}
+      <button class="link bad" onclick="delGame('${g.id}')">obriši</button></div>`;
   }).join('');
+  return `<h2>Povijest</h2>${games || '<p class="muted">Još nema završenih igara.</p>'}
+    <h2>Sigurnosna kopija</h2>
+    <p class="st">Spremi sve igrače, igre i statistiku (npr. u iCloud ili pošalji sebi), ili ih vrati iz kopije.</p>
+    <div class="row"><button class="btn" onclick="exportBackup()">Izvezi</button>
+      <button class="btn" onclick="$('#imp').click()">Uvezi</button>
+      ${window.Capacitor ? `<button class="btn" onclick="const t=prompt('Zalijepi kopiju:');if(t)importText(t)">Zalijepi</button>` : ''}</div>
+    <input type="file" id="imp" accept=".json,application/json" hidden onchange="importBackup(this)">`;
 }
 function delGame(id) { if (confirm('Obrisati igru iz povijesti? Statistika igrača će se promijeniti.')) { db.games = db.games.filter(g => g.id !== id); save(); render(); } }
 

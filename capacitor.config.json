@@ -2,8 +2,7 @@
   "appId": "hr.belablok.app",
   "appName": "Bela Blok",
   "webDir": "docs",
-  "ios": { "backgroundColor": "#1b4332" },
   "plugins": {
-    "StatusBar": { "style": "DARK", "overlaysWebView": true }
+    "StatusBar": { "style": "DEFAULT", "overlaysWebView": true }
   }
 }
