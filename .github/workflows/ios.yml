@@ -1,0 +1,48 @@
+# Builds the iPhone app on a GitHub macOS machine (no Mac needed) and publishes
+# BelaBlok.ipa as the "app" release. The .ipa is unsigned: Sideloadly / AltStore
+# signs it with your own Apple ID when installing (see README).
+name: iPhone app
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: macos-15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: npm ci
+      - run: npm test
+      - run: node make-icon.js
+
+      - name: Create Xcode project
+        run: |
+          npx cap add ios --packagemanager SPM
+          for f in ios/App/App/Assets.xcassets/AppIcon.appiconset/*.png; do cp native/icon-1024.png "$f"; done
+          for f in ios/App/App/Assets.xcassets/Splash.imageset/*.png; do cp native/splash.png "$f"; done
+          npx cap sync ios
+
+      - name: Build unsigned .ipa
+        run: |
+          xcodebuild -project ios/App/App.xcodeproj -scheme App -configuration Release \
+            -sdk iphoneos -destination 'generic/platform=iOS' -derivedDataPath build \
+            CODE_SIGNING_ALLOWED=NO CODE_SIGNING_REQUIRED=NO CODE_SIGN_IDENTITY="" build
+          mkdir Payload
+          cp -R build/Build/Products/Release-iphoneos/App.app Payload/
+          zip -qry BelaBlok.ipa Payload
+
+      - name: Publish release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release delete app --yes --cleanup-tag || true
+          gh release create app BelaBlok.ipa --target "$GITHUB_SHA" --title "Bela Blok – iPhone app" \
+            --notes "Preuzmi BelaBlok.ipa i instaliraj ga Sideloadlyjem (upute u README)."

@@ -1,0 +1,5 @@
+node_modules/
+# generated in CI (see .github/workflows/ios.yml)
+ios/
+native/
+build/

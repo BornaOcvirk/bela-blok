@@ -1,0 +1,318 @@
+<!doctype html>
+<html lang="hr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Bela Blok">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="theme-color" content="#1b4332">
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="icon-180.png">
+<link rel="icon" href="icon-180.png">
+<title>Bela Blok</title>
+<style>
+:root{--bg:#f4f2ea;--card:#fff;--text:#1d1c17;--muted:#6d6b62;--line:#e1ddd0;--green:#2d6a4f;--green-strong:#1b4332;--on-green:#fff;--soft:#e3efe7;--bad:#b3392b;color-scheme:light}
+@media (prefers-color-scheme:dark){:root:not([data-theme=light]){--bg:#11130f;--card:#1b1e19;--text:#ebeae2;--muted:#9b9a90;--line:#2d3229;--green:#3f8f68;--green-strong:#1b4332;--on-green:#fff;--soft:#1f3328;--bad:#e46a5c;color-scheme:dark}}
+:root[data-theme=dark]{--bg:#11130f;--card:#1b1e19;--text:#ebeae2;--muted:#9b9a90;--line:#2d3229;--green:#3f8f68;--green-strong:#1b4332;--on-green:#fff;--soft:#1f3328;--bad:#e46a5c;color-scheme:dark}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--text);font:16px/1.4 -apple-system,BlinkMacSystemFont,"Segoe UI",system-ui,sans-serif;padding-bottom:calc(72px + env(safe-area-inset-bottom));-webkit-tap-highlight-color:transparent}
+header{position:sticky;top:0;z-index:2;display:flex;align-items:center;justify-content:space-between;padding:calc(10px + env(safe-area-inset-top)) 16px 10px;background:var(--green-strong);color:#fff}
+h1{margin:0;font-size:20px;letter-spacing:.5px}
+header button{background:none;border:1px solid #ffffff55;color:#fff;border-radius:10px;font-size:18px;width:40px;height:36px;cursor:pointer}
+main{max-width:640px;margin:0 auto;padding:12px 16px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:14px;margin-bottom:12px}
+h2{margin:0 0 10px;font-size:18px}
+label{display:block;font-size:13px;color:var(--muted);margin:12px 0 6px}
+.row{display:flex;gap:8px}.row>*{flex:1;min-width:0}
+input,select{font:inherit;font-size:16px;width:100%;padding:10px 12px;border:1px solid var(--line);border-radius:10px;background:var(--bg);color:var(--text)}
+input[type=number]{text-align:center;font-size:20px;font-weight:700}
+input::-webkit-inner-spin-button{-webkit-appearance:none}
+.btn{font:inherit;font-weight:600;border:0;border-radius:10px;padding:12px 14px;background:var(--green);color:var(--on-green);cursor:pointer}
+.btn.big{width:100%;margin-top:14px;padding:14px}
+.btn.ghost{background:transparent;color:var(--text);border:1px solid var(--line)}
+.btn.sm{padding:6px 12px;font-size:13px}
+.seg label{margin:0;position:relative}.seg input{position:absolute;opacity:0}
+.seg span,.opt{display:block;width:100%;text-align:center;padding:10px;border:1px solid var(--line);border-radius:10px;color:var(--text);background:transparent;font:inherit;font-size:15px;cursor:pointer;overflow-wrap:anywhere}
+.seg input:checked+span,.opt.on{background:var(--green);color:var(--on-green);border-color:var(--green)}
+.seg input:focus-visible+span{outline:2px solid var(--green);outline-offset:2px}
+.board{display:grid;grid-template-columns:1fr 1fr;gap:12px;text-align:center}
+.tn{font-size:14px;color:var(--muted);font-weight:600;overflow-wrap:anywhere}
+.tot{font-size:46px;font-weight:800;font-variant-numeric:tabular-nums;line-height:1.1}
+.bar{height:6px;background:var(--line);border-radius:3px;overflow:hidden;margin:6px 0 10px}.bar i{display:block;height:100%;background:var(--green)}
+.sides{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:12px}
+.zv,.list{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}
+.chip{font:inherit;font-size:14px;padding:8px 10px;border-radius:999px;border:1px solid var(--green);background:transparent;color:var(--text);cursor:pointer}
+.chip.on{background:var(--green);color:var(--on-green)}
+.pill{font:inherit;font-size:13px;padding:4px 10px;border-radius:999px;border:0;background:var(--soft);color:var(--text);cursor:pointer}
+.preview{text-align:center;font-size:22px;font-weight:700;margin:14px 0;font-variant-numeric:tabular-nums}
+table{width:100%;border-collapse:collapse;font-variant-numeric:tabular-nums}
+th,td{padding:8px 4px;border-bottom:1px solid var(--line);text-align:center}
+th{font-size:13px;color:var(--muted);font-weight:600}
+.tag{font-size:11px;padding:2px 6px;border-radius:6px;background:var(--soft);font-weight:600}
+.bad,.btn.bad{color:var(--bad)}.btn:disabled{opacity:.4}.muted{color:var(--muted)}.center{text-align:center}.small{font-size:13px}
+.flash{background:var(--green);color:var(--on-green);border-radius:14px;padding:16px;text-align:center;margin-bottom:12px;font-weight:700;font-size:18px}
+nav{position:fixed;bottom:0;left:0;right:0;display:flex;background:var(--card);border-top:1px solid var(--line);padding-bottom:env(safe-area-inset-bottom)}
+nav button{flex:1;font:inherit;font-size:20px;background:none;border:0;padding:8px 0;color:var(--muted);display:flex;flex-direction:column;align-items:center;cursor:pointer}
+nav span{font-size:12px}nav button.on{color:var(--green);font-weight:700}
+.ph{display:flex;justify-content:space-between;align-items:center}
+.icon{background:none;border:0;font-size:18px;padding:4px 8px;color:var(--text);cursor:pointer}
+.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-top:10px;text-align:center}
+.stats span{display:block;font-size:18px;font-weight:700}.stats small{color:var(--muted);font-size:11px}
+.hrow{display:flex;justify-content:space-between;padding:4px 0}.hrow.win{font-weight:700;color:var(--green)}
+.link{background:none;border:0;color:var(--bad);font:inherit;font-size:13px;padding:6px 0 0;cursor:pointer}
+:focus-visible{outline:2px solid var(--green);outline-offset:2px}
+</style>
+</head>
+<body>
+<header><h1>♣ Bela Blok</h1><button id="themeBtn" onclick="cycleTheme()" aria-label="Promijeni temu (auto / svijetla / tamna)">◐</button></header>
+<main id="app"></main>
+<nav>
+  <button data-v="game" onclick="go('game')">🃏<span>Igra</span></button>
+  <button data-v="players" onclick="go('players')">👥<span>Igrači</span></button>
+  <button data-v="history" onclick="go('history')">📜<span>Povijest</span></button>
+</nav>
+<script src="bela.js"></script>
+<script>
+const KEY = 'belablok';
+let db = null;
+try { db = JSON.parse(localStorage.getItem(KEY)); } catch {}
+db = db || { players: [], games: [], theme: 'auto' };
+const save = () => { try { localStorage.setItem(KEY, JSON.stringify(db)); } catch { alert('Spremanje nije uspjelo!'); } };
+
+let view = 'game', draft = null, flash = '';
+const $ = s => document.querySelector(s);
+const esc = s => String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+const uid = () => Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
+const sum = a => a.reduce((x, y) => x + y, 0);
+const pname = id => db.players.find(p => p.id === id)?.name ?? '?';
+const teamName = tm => tm.map(pname).join(' & ');
+const active = () => db.games.find(g => winner(g) == null);
+const zvOf = (h, i) => sum(h.zv[i]) + h.bela[i] * 20;
+
+function applyTheme() {
+  document.documentElement.dataset.theme = db.theme;
+  $('#themeBtn').textContent = { auto: '◐', light: '☀', dark: '☾' }[db.theme];
+}
+function cycleTheme() { db.theme = { auto: 'light', light: 'dark', dark: 'auto' }[db.theme]; save(); applyTheme(); }
+
+function go(v) { view = v; render(); }
+function render() {
+  document.querySelectorAll('nav button').forEach(b => b.classList.toggle('on', b.dataset.v === view));
+  const g = active();
+  $('#app').innerHTML = view === 'players' ? playersView() : view === 'history' ? historyView()
+    : (flash ? `<div class="flash">${flash}</div>` : '') + (g ? gameView(g) : newGameView());
+  flash = '';
+}
+
+/* ---------- Igra ---------- */
+function newGameView() {
+  if (db.players.length < 4) return `<section class="card"><h2>Nova igra</h2>
+    <p class="muted">Za igru trebaju 4 igrača. Dodaj ih u kartici <b>Igrači</b>.</p>
+    <button class="btn" onclick="go('players')">Dodaj igrače</button></section>`;
+  const opts = db.players.map(p => `<option value="${p.id}">${esc(p.name)}</option>`).join('');
+  const sel = i => `<select id="p${i}" aria-label="Igrač ${i + 1}"><option value="">— igrač —</option>${opts}</select>`;
+  return `<section class="card"><h2>Nova igra</h2>
+    <label>Tim 1</label><div class="row">${sel(0)}${sel(1)}</div>
+    <label>Tim 2</label><div class="row">${sel(2)}${sel(3)}</div>
+    <label>Igra se do</label><div class="row seg">${[501, 701, 1001].map(t =>
+      `<label><input type="radio" name="target" value="${t}" ${t === 1001 ? 'checked' : ''}><span>${t}</span></label>`).join('')}</div>
+    <button class="btn big" onclick="startGame()">Započni igru</button></section>`;
+}
+function startGame() {
+  const ids = [0, 1, 2, 3].map(i => $('#p' + i).value);
+  if (ids.some(x => !x) || new Set(ids).size < 4) return alert('Odaberi 4 različita igrača.');
+  db.games.push({ id: uid(), date: Date.now(), teams: [[ids[0], ids[1]], [ids[2], ids[3]]],
+    target: +$('[name=target]:checked').value, hands: [], belot: null });
+  save(); render();
+}
+
+function gameView(g) {
+  const t = totals(g.hands);
+  const board = [0, 1].map(i => `<div>
+      <div class="tn">${esc(teamName(g.teams[i]))}</div>
+      <div class="tot">${t[i]}</div>
+      <div class="bar"><i style="width:${Math.min(100, t[i] / g.target * 100)}%"></i></div>
+      <button class="btn ghost sm" onclick="belot(${i})">Belot!</button></div>`).join('');
+  const rows = g.hands.map((h, n) => `<tr><td class="muted">${n + 1}</td>${[0, 1].map(i => `<td>
+      <b>${h.score[i]}</b>${h.caller === i ? ' <span class="tag" title="zvali adut">Z</span>' : ''}
+      ${h.fell && h.caller === i ? ' <span class="tag bad">pad</span>' : ''}
+      ${h.stiglja === i ? ' <span class="tag">štiglja</span>' : ''}
+      ${zvOf(h, i) ? ` <small class="muted">+${zvOf(h, i)}</small>` : ''}</td>`).join('')}</tr>`).reverse().join('');
+  return `<section class="card"><div class="board">${board}</div>
+      <p class="muted center small" style="margin:10px 0 0">Igra do ${g.target}</p></section>
+    ${draft ? handForm(g) : `<button class="btn big" style="margin:0 0 12px" onclick="newHand()">+ Nova ruka</button>`}
+    ${g.hands.length ? `<section class="card"><table><thead><tr><th>#</th><th>${esc(teamName(g.teams[0]))}</th><th>${esc(teamName(g.teams[1]))}</th></tr></thead><tbody>${rows}</tbody></table></section>` : ''}
+    <div class="row">
+      <button class="btn ghost" onclick="undoHand()" ${g.hands.length ? '' : 'disabled'}>↶ Poništi ruku</button>
+      <button class="btn ghost bad" onclick="abandonGame()">Prekini igru</button></div>`;
+}
+
+function newHand() { draft = { caller: null, cards: ['', ''], zv: [[], []], bela: [0, 0], stiglja: null }; render(); }
+function handForm(g) {
+  const d = draft, T = i => esc(teamName(g.teams[i]));
+  const side = i => `<div>
+    <div class="tn">${T(i)}</div>
+    <input id="c${i}" type="number" inputmode="numeric" min="0" max="162" placeholder="bodovi" aria-label="Bodovi ${T(i)}"
+      value="${d.stiglja != null ? (d.stiglja === i ? 252 : 0) : d.cards[i]}" ${d.stiglja != null ? 'disabled' : ''} oninput="cardIn(${i},this.value)">
+    <div class="zv">${[20, 50, 100, 150, 200].map(v => `<button class="chip" onclick="addZv(${i},${v})">+${v}</button>`).join('')}
+      <button class="chip ${d.bela[i] ? 'on' : ''}" aria-pressed="${!!d.bela[i]}" onclick="toggle('bela',${i})">Bela</button>
+      <button class="chip ${d.stiglja === i ? 'on' : ''}" aria-pressed="${d.stiglja === i}" onclick="toggle('stiglja',${i})">Štiglja</button></div>
+    <div class="list">${d.zv[i].map((v, k) => `<button class="pill" onclick="rmZv(${i},${k})" aria-label="Ukloni zvanje ${v}">${v} ✕</button>`).join('')}</div>
+  </div>`;
+  return `<section class="card"><h2>Ruka ${g.hands.length + 1}</h2>
+    <label>Tko je zvao adut?</label>
+    <div class="row">${[0, 1].map(i => `<button class="opt ${d.caller === i ? 'on' : ''}" onclick="draft.caller=${i};render()">${T(i)}</button>`).join('')}</div>
+    <label>Bodovi iz štihova (upiši jedan tim, drugi se računa sam) i zvanja</label>
+    <div class="sides">${side(0)}${side(1)}</div>
+    <div class="preview" id="preview">${previewText()}</div>
+    <div class="row"><button class="btn ghost" onclick="draft=null;render()">Odustani</button>
+      <button class="btn" onclick="saveHand()">Spremi ruku</button></div></section>`;
+}
+function cardIn(i, v) {
+  draft.cards[i] = v;
+  draft.cards[1 - i] = v === '' ? '' : HAND - Number(v);
+  $('#c' + (1 - i)).value = draft.cards[1 - i];
+  $('#preview').innerHTML = previewText();
+}
+function addZv(i, v) { draft.zv[i].push(v); render(); }
+function rmZv(i, k) { draft.zv[i].splice(k, 1); render(); }
+function toggle(what, i) {
+  if (what === 'bela') draft.bela[i] ^= 1;
+  else draft.stiglja = draft.stiglja === i ? null : i;
+  render();
+}
+function buildHand() {
+  const d = draft, cards = d.cards.map(Number);
+  if (d.caller == null) return 'Odaberi tko je zvao adut.';
+  if (d.stiglja == null && (d.cards[0] === '' || !cards.every(n => Number.isInteger(n) && n >= 0 && n <= HAND)))
+    return 'Upiši bodove (0–162).';
+  const zv = [0, 1].map(i => zvOf(d, i));
+  const { score, fell } = scoreHand({ caller: d.caller, cards, zvanja: zv, stiglja: d.stiglja });
+  return { caller: d.caller, cards, zv: d.zv, bela: d.bela, stiglja: d.stiglja, score, fell };
+}
+function previewText() {
+  const h = buildHand();
+  return typeof h === 'string' ? `<span class="muted small">${h}</span>`
+    : `${h.score[0]} : ${h.score[1]}${h.fell ? ' <span class="bad">— PAD!</span>' : ''}`;
+}
+function saveHand() {
+  const h = buildHand(), g = active();
+  if (typeof h === 'string') return alert(h);
+  g.hands.push(h); draft = null; save();
+  const w = winner(g);
+  if (w != null) flash = `🏆 Pobjeda: ${esc(teamName(g.teams[w]))}!`;
+  render();
+}
+function belot(i) {
+  const g = active();
+  if (!confirm(`BELOT za ${teamName(g.teams[i])}? Igra odmah završava pobjedom.`)) return;
+  g.belot = i; draft = null; save();
+  flash = `🏆 BELOT! Pobjeda: ${esc(teamName(g.teams[i]))}!`;
+  render();
+}
+function undoHand() { if (confirm('Poništiti zadnju ruku?')) { active().hands.pop(); save(); render(); } }
+function abandonGame() {
+  const g = active();
+  if (!confirm('Prekinuti i obrisati ovu igru?')) return;
+  db.games = db.games.filter(x => x !== g); draft = null; save(); render();
+}
+
+/* ---------- Igrači ---------- */
+function stats(pid) {
+  const s = { g: 0, w: 0, pts: 0, zv: 0, belot: 0, st: 0, pad: 0 };
+  for (const g of db.games) {
+    const t = g.teams.findIndex(tm => tm.includes(pid)), w = winner(g);
+    if (t < 0 || w == null) continue; // only finished games count
+    s.g++; if (w === t) s.w++; if (g.belot === t) s.belot++;
+    for (const h of g.hands) {
+      s.pts += h.score[t]; s.zv += zvOf(h, t);
+      if (h.stiglja === t) s.st++;
+      if (h.fell && h.caller === t) s.pad++;
+    }
+  }
+  return s;
+}
+function playersView() {
+  const list = db.players.map(p => ({ p, s: stats(p.id) })).sort((a, b) => b.s.w - a.s.w).map(({ p, s }) => `
+    <div class="card"><div class="ph"><b>${esc(p.name)}</b><span>
+      <button class="icon" onclick="renamePlayer('${p.id}')" aria-label="Preimenuj ${esc(p.name)}">✎</button>
+      <button class="icon" onclick="delPlayer('${p.id}')" aria-label="Obriši ${esc(p.name)}">🗑</button></span></div>
+      <div class="stats">${[['Igre', s.g], ['Pobjede', s.w], ['Uspjeh', s.g ? Math.round(s.w / s.g * 100) + '%' : '–'], ['Bodovi', s.pts],
+        ['Zvanja', s.zv], ['Belot', s.belot], ['Štiglje', s.st], ['Padovi', s.pad]].map(([k, v]) => `<div><span>${v}</span><small>${k}</small></div>`).join('')}</div></div>`).join('');
+  return `<section class="card"><h2>Igrači</h2>
+    <form class="row" onsubmit="addPlayer(event)"><input id="pname" placeholder="Ime igrača" maxlength="30" autocomplete="off" aria-label="Ime igrača">
+    <button class="btn" style="flex:0 0 auto">Dodaj</button></form></section>
+    ${list || '<p class="muted center">Još nema igrača.</p>'}`;
+}
+const nameTaken = (n, except) => db.players.some(p => p.id !== except && p.name.toLowerCase() === n.toLowerCase());
+function addPlayer(e) {
+  e.preventDefault();
+  const n = $('#pname').value.trim();
+  if (!n) return;
+  if (nameTaken(n)) return alert('Igrač s tim imenom već postoji.');
+  db.players.push({ id: uid(), name: n }); save(); render(); $('#pname').focus();
+}
+function renamePlayer(id) {
+  const p = db.players.find(x => x.id === id), n = prompt('Novo ime:', p.name)?.trim();
+  if (!n) return;
+  if (nameTaken(n, id)) return alert('Igrač s tim imenom već postoji.');
+  p.name = n; save(); render();
+}
+function delPlayer(id) {
+  if (db.games.some(g => g.teams.flat().includes(id))) return alert('Igrač ima odigrane igre pa se ne može obrisati (statistika bi se izgubila).');
+  if (confirm(`Obrisati ${pname(id)}?`)) { db.players = db.players.filter(p => p.id !== id); save(); render(); }
+}
+
+/* ---------- Povijest ---------- */
+function historyView() {
+  const done = db.games.filter(g => winner(g) != null).reverse();
+  const backup = `<section class="card"><h2>Sigurnosna kopija</h2>
+    <p class="muted small" style="margin-top:0">Spremi sve igrače, igre i statistiku u datoteku (npr. u iCloud ili pošalji sebi), ili vrati podatke iz kopije.</p>
+    <div class="row"><button class="btn" onclick="exportBackup()">⬇ Izvezi</button>
+      <button class="btn ghost" onclick="$('#imp').click()">⬆ Uvezi</button>
+      ${window.Capacitor ? `<button class="btn ghost" onclick="const t=prompt('Zalijepi kopiju:');if(t)importText(t)">📋 Zalijepi</button>` : ''}</div>
+    <input type="file" id="imp" accept=".json,application/json" hidden onchange="importBackup(this)"></section>`;
+  if (!done.length) return backup + '<p class="muted center">Još nema završenih igara.</p>';
+  return backup + done.map(g => {
+    const t = totals(g.hands), w = winner(g);
+    return `<div class="card"><div class="muted small">${new Date(g.date).toLocaleString('hr-HR', { dateStyle: 'medium', timeStyle: 'short' })}
+      · do ${g.target} · ${g.hands.length} ruku${g.belot != null ? ' · <b>BELOT</b>' : ''}</div>
+      ${[0, 1].map(i => `<div class="hrow ${w === i ? 'win' : ''}"><span>${w === i ? '🏆 ' : ''}${esc(teamName(g.teams[i]))}</span><b>${t[i]}</b></div>`).join('')}
+      <button class="link" onclick="delGame('${g.id}')">Obriši igru</button></div>`;
+  }).join('');
+}
+function delGame(id) { if (confirm('Obrisati igru iz povijesti? Statistika igrača će se promijeniti.')) { db.games = db.games.filter(g => g.id !== id); save(); render(); } }
+
+async function exportBackup() {
+  const file = new File([JSON.stringify(db)], `bela-blok-${new Date().toISOString().slice(0, 10)}.json`, { type: 'application/json' });
+  // iPhone: share sheet (Spremi u Datoteke / AirDrop / poruka). Elsewhere: plain download.
+  if (navigator.canShare?.({ files: [file] })) { try { await navigator.share({ files: [file] }); } catch {} return; }
+  if (window.Capacitor) { // native app webview can't download files: hand the backup over as text
+    try { await navigator.clipboard.writeText(JSON.stringify(db)); alert('Kopija je kopirana u međuspremnik. Zalijepi je u Bilješke ili poruku. Vraćaš je gumbom „Zalijepi”.'); }
+    catch { alert('Izvoz nije uspio.'); }
+    return;
+  }
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(file); a.download = file.name; a.click();
+  setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+}
+async function importBackup(input) {
+  const f = input.files[0]; input.value = '';
+  if (!f) return;
+  importText(await f.text());
+}
+function importText(txt) {
+  let d;
+  try { d = JSON.parse(txt); } catch { return alert('Kopija nije ispravna.'); }
+  if (!validBackup(d)) return alert('Ovo nije Bela Blok sigurnosna kopija.');
+  if (!confirm(`Uvesti ${d.players.length} igrača i ${d.games.length} igara? Trenutni podaci bit će ZAMIJENJENI.`)) return;
+  db = { players: d.players, games: d.games, theme: db.theme }; draft = null; save(); render();
+}
+
+applyTheme(); render();
+if ('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js').catch(() => {});
+</script>
+</body>
+</html>
