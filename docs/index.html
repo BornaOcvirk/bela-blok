@@ -83,6 +83,8 @@ input::placeholder{color:var(--soft);opacity:.6}
 /* lists */
 .line{border-bottom:1px solid var(--rule);padding:10px 0}
 .line .top{display:flex;justify-content:space-between;align-items:baseline;gap:8px}
+.item{display:block;width:100%;text-align:left;background:none;border:0;border-bottom:1px solid var(--rule);cursor:pointer}
+.item .st{display:block}
 .name{font-size:22px;overflow-wrap:anywhere}
 .st{font-size:15px;color:var(--soft);margin-top:2px}
 .icon{background:none;border:0;font-size:18px;padding:4px 6px;cursor:pointer}
@@ -98,9 +100,8 @@ nav button.on{color:var(--ink);text-decoration:underline;text-underline-offset:5
 <main id="app"></main>
 <nav>
   <button data-v="game" onclick="go('game')">Igra</button>
-  <button data-v="tijek" onclick="tijekId=null;go('tijek')">Tijek igre</button>
   <button data-v="players" onclick="go('players')">Igrači</button>
-  <button data-v="history" onclick="go('history')">Povijest</button>
+  <button data-v="history" onclick="histId=null;go('history')">Povijest</button>
 </nav>
 <script src="bela.js"></script>
 <script>
@@ -110,7 +111,7 @@ try { db = JSON.parse(localStorage.getItem(KEY)); } catch {}
 db = db || { players: [], games: [], theme: 'auto' };
 const save = () => { try { localStorage.setItem(KEY, JSON.stringify(db)); } catch { alert('Spremanje nije uspjelo!'); } };
 
-let view = 'game', draft = null, flash = '', pickBelot = false, tijekId = null, cd = null;
+let view = 'game', draft = null, flash = '', pickBelot = false, histId = null, cd = null;
 const $ = s => document.querySelector(s);
 const esc = s => String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 const uid = () => Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
@@ -131,7 +132,7 @@ function go(v) { view = v; render(); }
 function render() {
   document.querySelectorAll('nav button').forEach(b => b.classList.toggle('on', b.dataset.v === view));
   const g = active();
-  $('#app').innerHTML = view === 'players' ? playersView() : view === 'history' ? historyView() : view === 'tijek' ? tijekView()
+  $('#app').innerHTML = view === 'players' ? playersView() : view === 'history' ? historyView()
     : (flash ? `<div class="flash">${flash}</div>` : '') + (g ? gameView(g) : newGameView());
   flash = '';
 }
@@ -158,8 +159,8 @@ function startGame() {
   save(); render();
 }
 
-function gameView(g) {
-  const t = totals(g.hands);
+function sheet(g) {
+  const t = totals(g.hands), w = winner(g);
   const cell = (h, i) => {
     const pad = h.fell && h.caller === i, z = zvOf(h, i);
     if (pad) return '<td class="bad">0<sup class="bad">pad</sup></td>'; // fallen team loses its zvanja too
@@ -172,8 +173,12 @@ function gameView(g) {
       <thead><tr>${[0, 1].map(i => `<th scope="col" class="${L(i)}">${MV(i)}<small>${esc(teamName(g.teams[i]))}</small></th>`).join('')}</tr></thead>
       <tbody>${rows.join('')}</tbody>
       <tfoot><tr class="tot"><td class="${L(0)}">${t[0]}</td><td class="${L(1)}">${t[1]}</td></tr></tfoot></table>
-    ${g.hands.length ? `<p class="diff">${lead < 0 ? 'Izjednačeno' : `${MV(lead)} vodi za ${Math.abs(t[0] - t[1])}`}</p>` : ''}
-    <p class="note">do ${g.target} · * zvao adut · Š štiglja · +zvanja</p>
+    ${g.hands.length ? `<p class="diff">${w != null ? `Pobjeda ${MV(w)}${g.belot != null ? ' — belot' : ` za ${Math.abs(t[0] - t[1])}`}`
+      : lead < 0 ? 'Izjednačeno' : `${MV(lead)} vodi za ${Math.abs(t[0] - t[1])}`}</p>` : ''}
+    <p class="note">do ${g.target} · * zvao adut · Š štiglja · +zvanja</p>`;
+}
+function gameView(g) {
+  return `${sheet(g)}
     ${draft ? handForm(g) : `
       <div class="row" style="margin-top:16px">
         <button class="btn main wide" style="flex:2" onclick="newHand()">+ Upiši ruku</button>
@@ -260,10 +265,8 @@ function abandonGame() {
   db.games = db.games.filter(x => x !== g); draft = null; pickBelot = false; save(); render();
 }
 
-/* ---------- Tijek igre ---------- */
-function tijekView() {
-  const g = db.games.find(x => x.id === tijekId) || active() || db.games.filter(x => winner(x) != null).at(-1);
-  if (!g) return '<h2>Tijek igre</h2><p class="muted">Još nema igara.</p>';
+/* ---------- Pregled igre (Povijest → tap na igru) ---------- */
+function overview(g) {
   const w = winner(g), T = f => [0, 1].map(f), count = f => T(i => g.hands.filter(h => f(h, i)).length);
   const calls = count((h, i) => h.caller === i), falls = count((h, i) => h.caller === i && h.fell);
   const rows = [
@@ -275,14 +278,19 @@ function tijekView() {
     ['Štiglje', count((h, i) => h.stiglja === i)],
     ['Bodovi', totals(g.hands)],
   ];
-  return `<h2>Tijek igre</h2>
-    <p class="st" style="margin-top:-4px">${new Date(g.date).toLocaleDateString('hr-HR')} · do ${g.target} · ${g.hands.length} ruku ·
+  return `<button class="link" onclick="histId=null;render()">‹ natrag na povijest</button>
+    <h2 style="margin-top:6px">Pregled igre</h2>
+    <p class="st" style="margin:-4px 0 10px">${new Date(g.date).toLocaleDateString('hr-HR')} · do ${g.target} · ${g.hands.length} ruku ·
       ${w == null ? 'u tijeku' : `pobjeda ${MV(w)}${g.belot != null ? ' (belot)' : ''}`}</p>
+    ${sheet(g)}
+    <h2>Tijek igre</h2>
     <div class="legend">${T(i => `<span>${swatch(i)}${MV(i)} · ${esc(teamName(g.teams[i]))}</span>`).join('')}</div>
     ${g.hands.length ? chart(g) : '<p class="muted">Još nema upisanih ruku.</p>'}
-    <table class="sheet stat" style="margin-top:14px">
+    <h2>Statistika</h2>
+    <table class="sheet stat">
       <thead><tr><th></th><th scope="col">MI</th><th scope="col">VI</th></tr></thead>
-      <tbody>${rows.map(([k, v]) => `<tr><td>${k}</td><td>${v[0]}</td><td>${v[1]}</td></tr>`).join('')}</tbody></table>`;
+      <tbody>${rows.map(([k, v]) => `<tr><td>${k}</td><td>${v[0]}</td><td>${v[1]}</td></tr>`).join('')}</tbody></table>
+    <button class="link bad" style="margin-top:14px" onclick="delGame('${g.id}')">obriši igru</button>`;
 }
 // MI = solid line + circles, VI = dashed line + squares, so identity never relies on colour alone.
 const swatch = i => `<svg width="26" height="10" aria-hidden="true"><line x1="1" y1="5" x2="25" y2="5" stroke="var(--${i ? 'vi' : 'mi'})" stroke-width="2" ${i ? 'stroke-dasharray="5 3"' : ''}/></svg>`;
@@ -379,16 +387,16 @@ function delPlayer(id) {
 
 /* ---------- Povijest ---------- */
 function historyView() {
-  const done = db.games.filter(g => winner(g) != null).reverse();
-  const games = done.map(g => {
+  const open = db.games.find(g => g.id === histId);
+  if (open) return overview(open);
+  const games = db.games.slice().sort((a, b) => b.date - a.date).map(g => {
     const t = totals(g.hands), w = winner(g);
-    return `<div class="line"><div class="st">${new Date(g.date).toLocaleString('hr-HR', { dateStyle: 'medium', timeStyle: 'short' })}
-      · do ${g.target} · ${g.hands.length} ruku${g.belot != null ? ' · BELOT' : ''}</div>
-      ${[0, 1].map(i => `<div class="hrow ${w === i ? 'win' : ''}"><span>${MV(i)} · ${esc(teamName(g.teams[i]))}${w === i ? ' ✓' : ''}</span><span>${t[i]}</span></div>`).join('')}
-      <div class="row" style="justify-content:space-between"><button class="link" style="flex:0 0 auto" onclick="tijekId='${g.id}';go('tijek')">tijek igre</button>
-      <button class="link bad" style="flex:0 0 auto" onclick="delGame('${g.id}')">obriši</button></div></div>`;
+    return `<button class="line item" onclick="histId='${g.id}';render();scrollTo(0,0)"><span class="st">${new Date(g.date).toLocaleString('hr-HR', { dateStyle: 'medium', timeStyle: 'short' })}
+      · do ${g.target} · ${g.hands.length} ruku${g.belot != null ? ' · BELOT' : ''}${w == null ? ' · <u>u tijeku</u>' : ''}</span>
+      ${[0, 1].map(i => `<span class="hrow ${w === i ? 'win' : ''}"><span>${MV(i)} · ${esc(teamName(g.teams[i]))}${w === i ? ' ✓' : ''}</span><span>${t[i]}</span></span>`).join('')}
+      <span class="st" style="text-align:right">pregled ›</span></button>`;
   }).join('');
-  return `<h2>Povijest</h2>${games || '<p class="muted">Još nema završenih igara.</p>'}
+  return `<h2>Povijest</h2>${games || '<p class="muted">Još nema igara.</p>'}
     <h2>Sigurnosna kopija</h2>
     <p class="st">Spremi sve igrače, igre i statistiku (npr. u iCloud ili pošalji sebi), ili ih vrati iz kopije.</p>
     <div class="row"><button class="btn" onclick="exportBackup()">Izvezi</button>
@@ -396,7 +404,7 @@ function historyView() {
       ${window.Capacitor ? `<button class="btn" onclick="const t=prompt('Zalijepi kopiju:');if(t)importText(t)">Zalijepi</button>` : ''}</div>
     <input type="file" id="imp" accept=".json,application/json" hidden onchange="importBackup(this)">`;
 }
-function delGame(id) { if (confirm('Obrisati igru iz povijesti? Statistika igrača će se promijeniti.')) { db.games = db.games.filter(g => g.id !== id); save(); render(); } }
+function delGame(id) { if (confirm('Obrisati igru iz povijesti? Statistika igrača će se promijeniti.')) { db.games = db.games.filter(g => g.id !== id); histId = null; draft = null; save(); render(); } }
 
 async function exportBackup() {
   const file = new File([JSON.stringify(db)], `bela-blok-${new Date().toISOString().slice(0, 10)}.json`, { type: 'application/json' });
