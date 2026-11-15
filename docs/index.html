@@ -88,7 +88,7 @@ input::placeholder{color:var(--soft);opacity:.6}
 .grab{display:block;width:40px;height:5px;border-radius:3px;background:var(--rule);margin:0 auto}
 @keyframes up{from{transform:translateY(100%)}}@keyframes fade{from{opacity:0}}
 /* hand entry */
-.entry{position:relative;border:2px solid var(--ink);border-radius:16px;padding:4px 12px 38px;margin-top:16px}
+.entry{position:relative;border:2px solid var(--ink);border-radius:16px;padding:4px 12px 30px;margin-top:16px;scroll-margin-top:calc(env(safe-area-inset-top) + 6px)}
 .pip{position:absolute;width:22px;height:22px}.pip.tr{top:10px;right:10px}.pip.bl{bottom:10px;left:10px;transform:rotate(180deg)}
 .cols{display:grid;grid-template-columns:1fr 1fr;gap:14px}.cols>div{min-width:0}
 .colh{text-align:center;font-size:24px;margin-top:6px}
@@ -98,10 +98,10 @@ input::placeholder{color:var(--soft);opacity:.6}
 .chip.red{border-color:var(--bad);color:var(--bad)}
 .chip.guest{border-style:dashed}
 #plist{justify-content:center}
-.zvs{display:flex;flex-direction:column;gap:8px;margin-top:10px}.zvr{display:flex;gap:6px}
-.zvb{flex:1;position:relative;border:2px solid var(--ink);background:transparent;border-radius:12px;padding:10px 6px;font-size:21px;font-weight:600;cursor:pointer}
+.zvs{display:flex;flex-direction:column;gap:6px;margin-top:8px}.zvr{display:flex;gap:6px}
+.zvb{flex:1;position:relative;border:2px solid var(--ink);background:transparent;border-radius:12px;padding:6px;font-size:21px;font-weight:600;cursor:pointer}
 .zvb.on{border-color:var(--green);color:var(--green);background:var(--hl)}.zvb.red{border-color:var(--bad);color:var(--bad)}
-.zvb b{position:absolute;top:-9px;right:-5px;min-width:30px;padding:0 6px;border-radius:999px;background:var(--green);color:var(--on-green);font-size:15px;line-height:22px}
+.zvb b{position:absolute;top:-7px;right:-5px;min-width:30px;padding:0 6px;border-radius:999px;background:var(--green);color:var(--on-green);font-size:15px;line-height:22px}
 .zvm{flex:0 0 44px;border:2px solid var(--bad);background:transparent;color:var(--bad);border-radius:12px;font-size:24px;cursor:pointer}
 .hhead{display:flex;align-items:center;justify-content:space-between;gap:10px}
 .dealer{display:flex;flex-wrap:wrap;align-items:center;justify-content:center;gap:8px;margin:12px 0 0;font-size:19px}
@@ -281,15 +281,14 @@ function newGameView() {
 }
 const slotBtn = (id, clear) => id ? `<button class="btn on" onclick="${clear};render()" aria-label="Makni ${esc(pname(id))}">${esc(pname(id))} ✕</button>`
   : `<button class="btn" onclick="newPlayer()">+ igrač</button>`;
-function newPlayer() { // empty slot: type a name, it becomes a saved player (or picks the existing one)
-  const name = prompt('Ime igrača:')?.trim().slice(0, 30);
-  if (!name) return;
-  const old = db.players.find(p => p.name.toLowerCase() === name.toLowerCase());
-  if (old && taken().includes(old.id)) return alert('Taj igrač je već odabran.');
-  if (!old) { db.players.push({ id: uid(), name }); save(); }
-  pickPlayer(old?.id ?? db.players.at(-1).id);
+// Names are typed into the field on the page, not prompt(): a home-screen web app's dialog won't take typing.
+function newPlayer() { const q = $('#q'); q.focus(); q.scrollIntoView({ block: 'center', behavior: 'smooth' }); }
+function addNamed() {
+  const name = $('#q').value.trim().slice(0, 30);
+  if (!name || nameTaken(name)) return;
+  const id = uid(); db.players.push({ id, name }); save(); pickPlayer(id);
 }
-const finder = () => `<input id="q" type="search" placeholder="Traži igrača…" autocomplete="off" aria-label="Traži igrača"
+const finder = () => `<input id="q" type="search" placeholder="Upiši ime igrača…" autocomplete="off" aria-label="Upiši ime igrača"
       oninput="$('#plist').innerHTML=playerChips()" onkeydown="if(event.key==='Enter'){event.preventDefault();$('#plist button')?.click()}">
     <div id="plist" class="chips">${playerChips()}</div>`;
 // On Turnir the chips fill a team's 2 slots and skip players already in a team.
@@ -302,11 +301,13 @@ function playerChips() {
     .sort((a, b) => a.name.localeCompare(b.name, 'hr'));
   const typed = $('#q')?.value.trim() ?? '';
   return list.map(p => `<button class="chip ${p.guest ? 'guest' : ''}" onclick="pickPlayer('${p.id}')">${esc(p.name)}${p.guest ? ' · gost' : ''}</button>`).join('')
-    + `<button class="chip guest" onclick="addGuest()">+ ${typed && !nameTaken(typed) ? `„${esc(typed)}” kao gost` : 'Gost'}</button>`;
+    + (typed && !nameTaken(typed) ? `<button class="chip" onclick="addNamed()">+ igrač „${esc(typed)}”</button>` : '')
+    + `<button class="chip guest" onclick="addGuest()">+ ${typed && !nameTaken(typed) ? `gost „${esc(typed)}”` : 'Gost'}</button>`;
 }
 function addGuest() {
-  const typed = $('#q').value.trim(), name = (typed && !nameTaken(typed) ? typed : prompt('Ime gosta:', 'Gost')?.trim())?.slice(0, 30);
-  if (!name) return;
+  const typed = $('#q').value.trim().slice(0, 30), free = n => { const o = db.players.find(p => p.name.toLowerCase() === n.toLowerCase()); return !o || o.guest && !taken().includes(o.id); };
+  let name = typed && !nameTaken(typed) ? typed : 'Gost';
+  for (let k = 2; !free(name); k++) name = 'Gost ' + k; // no name typed: Gost, Gost 2, …
   const old = db.players.find(p => p.name.toLowerCase() === name.toLowerCase());
   if (old && (!old.guest || taken().includes(old.id))) return alert(old.guest ? 'Taj gost je već odabran.' : 'Igrač s tim imenom već postoji.');
   const id = old?.id ?? uid();
@@ -405,9 +406,7 @@ function handForm(g) {
   const pip = SUIT[SUITS[(d.idx ?? g.hands.length) % 4]]; // each hand gets the next suit
   return `<div class="entry"><span class="pip tr">${pip}</span><span class="pip bl">${pip}</span>
     ${d.idx != null ? `<h2 style="margin:10px 0 0">Ispravak ${d.idx + 1}. ruke</h2>` : ''}
-    <span class="lbl">Tko je zvao adut?</span>
-    <div class="row">${[0, 1].map(i => `<button class="btn ${d.caller === i ? 'on' : ''}" aria-pressed="${d.caller === i}" onclick="draft.caller=${i};render()">${MV(i)}</button>`).join('')}</div>
-    <span class="lbl">Bodovi (drugi stupac se sam izračuna) i zvanja</span>
+    <div class="row" role="group" aria-label="Tko je zvao adut?" style="margin-top:12px">${[0, 1].map(i => `<button class="btn ${d.caller === i ? 'on' : ''}" aria-pressed="${d.caller === i}" onclick="draft.caller=${i};render()">${MV(i)}</button>`).join('')}</div>
     <div class="cols">${col(0)}${col(1)}</div>
     <div class="preview" id="preview">${previewText()}</div>
     <div class="row"><button class="btn" onclick="draft=null;render()">Odustani</button>
@@ -960,6 +959,16 @@ applyTheme(); render();
 addEventListener('resize', placeInd);
 addEventListener('keydown', e => { if (e.key === 'Escape' && pickDealer) { pickDealer = false; render(); } }); document.fonts?.ready.then(placeInd);
 if ('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js').catch(() => {});
+navigator.storage?.persist?.().catch(() => {}); // ask iOS not to clear players and games when space runs low
+// A home-screen web app resumes the old page instead of reloading, so it would keep running an old version.
+// When it comes back, reload if the page on the server changed (no tag offline or in the native app, so no reload).
+const pageTag = () => fetch(location.pathname, { method: 'HEAD', cache: 'no-store' }).then(r => r.headers.get('etag') || r.headers.get('last-modified')).catch(() => null);
+let tag0 = null; pageTag().then(t => tag0 = t);
+document.addEventListener('visibilitychange', async () => {
+  if (document.visibilityState !== 'visible' || !tag0) return;
+  const t = await pageTag();
+  if (t && t !== tag0 && !draft) location.reload(); // never throw away a hand that's being typed
+});
 </script>
 </body>
 </html>
