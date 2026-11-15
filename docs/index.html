@@ -54,6 +54,7 @@ input::placeholder{color:var(--soft);opacity:.6}
 .sheet th{font-size:32px;line-height:1;padding-top:8px;border-bottom:2px solid var(--ink)}
 .sheet th small{display:block;font-size:14px;color:var(--soft);padding:4px 0 6px;overflow-wrap:anywhere}
 .sheet td{font-size:24px;height:40px}
+.sheet tr.hand{cursor:pointer}.sheet tr.hand:active td,.sheet tr.editing td{background:var(--hl)}
 .sheet sup{font-size:12px;color:var(--soft);margin-left:2px}
 .sheet .zv{font-size:13px;color:var(--green);margin-left:4px}
 .sheet .tot td{font-size:36px;height:58px;border-top:5px double var(--ink);border-bottom:0}
@@ -258,7 +259,8 @@ function sheet(g) {
     if (pad) return '<td class="bad">0<sup class="bad">pad</sup></td>'; // fallen team loses its zvanja too
     return `<td>${h.score[i]}${h.caller === i ? '<sup>*</sup>' : ''}${h.stiglja === i ? '<sup>Š</sup>' : ''}${z ? `<span class="zv">+${z}</span>` : ''}</td>`;
   };
-  const rows = g.hands.map(h => `<tr>${cell(h, 0)}${cell(h, 1)}</tr>`);
+  const rows = g.hands.map((h, k) => `<tr class="hand ${draft?.gid === g.id && draft.idx === k ? 'editing' : ''}" role="button" tabindex="0" aria-label="Ispravi ruku ${k + 1}"
+    onclick="editHand('${g.id}',${k})" onkeydown="if(event.key==='Enter')this.click()">${cell(h, 0)}${cell(h, 1)}</tr>`);
   while (rows.length < 6) rows.push('<tr><td></td><td></td></tr>'); // empty ruled lines, like paper
   const lead = t[0] === t[1] ? -1 : t[0] > t[1] ? 0 : 1, L = i => lead === i ? 'lead' : '';
   return `<table class="sheet">
@@ -267,7 +269,7 @@ function sheet(g) {
       <tfoot><tr class="tot"><td class="${L(0)}">${t[0]}</td><td class="${L(1)}">${t[1]}</td></tr></tfoot></table>
     ${g.hands.length ? `<p class="diff">${w != null ? `Pobjeda ${MV(w)}${g.belot != null ? ' — belot' : ` za ${Math.abs(t[0] - t[1])}`}`
       : lead < 0 ? 'Izjednačeno' : `${MV(lead)} vodi za ${Math.abs(t[0] - t[1])}`}</p>` : ''}
-    <p class="note">do ${g.target} · * zvao adut · Š štiglja · +zvanja</p>`;
+    <p class="note">do ${g.target} · * zvao adut · Š štiglja · +zvanja · dodirni red za ispravak</p>`;
 }
 const SEAT = ['ja', 'desni protivnik', 'partner', 'lijevi protivnik'];
 const dealer = (g, k = 0) => ((g.dealer ?? 0) + g.hands.length + k) % 4; // index into SEAT
@@ -278,7 +280,7 @@ function gameView(g) {
       <button class="chip on" aria-expanded="${pickDealer}" aria-label="Miješa ${SEAT[dealer(g)]}, promijeni" onclick="pickDealer=!pickDealer;render()">${SEAT[dealer(g)]} ▾</button>
       <span class="muted small">zatim ${SEAT[dealer(g, 1)]}</span></div>
     ${pickDealer ? `<div class="chips" style="justify-content:center">${SEAT.map((t, i) => `<button class="chip" onclick="setDealer(${i})">${t}</button>`).join('')}</div>` : ''}
-    ${draft ? handForm(g) : `
+    ${draft?.gid === g.id ? handForm(g) : `
       <div class="row" style="margin-top:16px">
         <button class="btn main wide" style="flex:2" onclick="newHand()">+ Upiši ruku</button>
         <button class="btn red wide" aria-expanded="${pickBelot}" onclick="pickBelot=!pickBelot;render()">BELOT</button></div>
@@ -290,7 +292,13 @@ function gameView(g) {
 }
 
 function newHand() {
-  draft = { caller: null, cards: ['', ''], zv: [[], []], bela: [0, 0], stiglja: null };
+  draft = { gid: active().id, idx: null, caller: null, cards: ['', ''], zv: [[], []], bela: [0, 0], stiglja: null };
+  pickBelot = false; render();
+  $('.entry').scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+function editHand(gid, k) {
+  const h = db.games.find(x => x.id === gid).hands[k];
+  draft = { gid, idx: k, caller: h.caller, cards: h.cards ? [...h.cards] : ['', ''], zv: h.zv.map(z => [...z]), bela: [...h.bela], stiglja: h.stiglja };
   pickBelot = false; render();
   $('.entry').scrollIntoView({ behavior: 'smooth', block: 'start' });
 }
@@ -302,11 +310,12 @@ function handForm(g) {
       value="${d.stiglja != null ? (d.stiglja === i ? 252 : 0) : d.cards[i]}" ${d.stiglja != null ? 'disabled' : ''} oninput="cardIn(${i},this)">
     <div class="chips">${[20, 50, 100, 150, 200].map(v => `<button class="chip" onclick="addZv(${i},${v})">+${v}</button>`).join('')}
       <button class="chip ${d.stiglja === i ? 'on' : ''}" aria-pressed="${d.stiglja === i}" onclick="toggleStiglja(${i})">ŠTIGLJA</button>
-      <button class="chip red" onclick="belot(${i})">BELOT</button></div>
+      ${d.idx == null ? `<button class="chip red" onclick="belot(${i})">BELOT</button>` : ''}</div>
     <div class="listed">${d.zv[i].map((v, k) => `<button onclick="rmZv(${i},${k})" aria-label="Ukloni zvanje ${v}">${v} ✕</button>`).join('')}</div>
   </div>`;
-  const pip = SUIT[SUITS[g.hands.length % 4]]; // each new hand gets the next suit
+  const pip = SUIT[SUITS[(d.idx ?? g.hands.length) % 4]]; // each hand gets the next suit
   return `<div class="entry"><span class="pip tr">${pip}</span><span class="pip bl">${pip}</span>
+    ${d.idx != null ? `<h2 style="margin:10px 0 0">Ispravak ${d.idx + 1}. ruke</h2>` : ''}
     <span class="lbl">Tko je zvao adut?</span>
     <div class="row">${[0, 1].map(i => `<button class="btn ${d.caller === i ? 'on' : ''}" aria-pressed="${d.caller === i}" onclick="draft.caller=${i};render()">${MV(i)}</button>`).join('')}</div>
     <span class="lbl">Bodovi (drugi stupac se sam izračuna) i zvanja</span>
@@ -342,11 +351,14 @@ function previewText() {
     : `MI ${h.score[0]} : ${h.score[1]} VI${h.fell ? ' <span class="bad">— PAD!</span>' : ''}`;
 }
 function saveHand() {
-  const h = buildHand(), g = active();
+  const h = buildHand(), g = db.games.find(x => x.id === draft.gid), was = winner(g);
   if (typeof h === 'string') return alert(h);
-  g.hands.push(h); draft = null; save();
+  const hands = g.hands.slice(); hands[draft.idx ?? hands.length] = h;
+  // a fix that reopens a finished game would leave two games in progress
+  if (was != null && winner({ ...g, hands }) == null && active()) return alert('Ova ispravka bi ponovno otvorila igru, a druga je igra u tijeku. Prvo završi ili prekini tu igru.');
+  g.hands = hands; draft = null; save();
   const w = winner(g);
-  if (w != null) flash = `Pobjeda: ${MV(w)} — ${esc(teamName(g.teams[w]))}!`;
+  if (w != null && w !== was && view === 'game') flash = `Pobjeda: ${MV(w)} — ${esc(teamName(g.teams[w]))}!`;
   render();
 }
 function belot(i) {
@@ -356,7 +368,7 @@ function belot(i) {
   flash = `BELOT! Pobjeda: ${MV(i)} — ${esc(teamName(g.teams[i]))}!`;
   render();
 }
-function undoHand() { if (confirm('Poništiti zadnju ruku?')) { active().hands.pop(); save(); render(); } }
+function undoHand() { if (confirm('Poništiti zadnju ruku?')) { active().hands.pop(); draft = null; save(); render(); } }
 function abandonGame() {
   const g = active();
   if (!confirm('Prekinuti i obrisati ovu igru?')) return;
@@ -379,7 +391,7 @@ function overview(g) {
     <h2 style="margin-top:6px">Igra br. ${gameNo(g)}</h2>
     <p class="st" style="margin:-4px 0 10px">${new Date(g.date).toLocaleDateString('hr-HR')} · do ${g.target} · ${g.hands.length} ruku ·
       ${w == null ? 'u tijeku' : `pobjeda ${MV(w)}${g.belot != null ? ' (belot)' : ''}`}</p>
-    ${sheet(g)}
+    ${sheet(g)}${draft?.gid === g.id ? handForm(g) : ''}
     <h2>Tijek igre</h2>
     <div class="legend">${T(i => `<span>${swatch(i)}${MV(i)} · ${esc(teamName(g.teams[i]))}</span>`).join('')}</div>
     ${g.hands.length ? chart(g) : '<p class="muted">Još nema upisanih ruku.</p>'}
