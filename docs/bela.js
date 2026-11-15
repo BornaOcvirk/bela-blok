@@ -37,10 +37,11 @@ function validBackup(d) {
       && isPair(g.teams) && g.teams.every(t => isPair(t) && t.every(isId)) && Array.isArray(g.hands)
       && g.hands.every(h => h && isTeam(h.caller) && isPair(h.score) && h.score.every(Number.isFinite)
         && isPair(h.zv) && h.zv.every(z => Array.isArray(z) && z.every(Number.isFinite))
-        && isPair(h.bela) && h.bela.every(isTeam) && (h.stiglja == null || isTeam(h.stiglja))))
+        && isPair(h.bela) && h.bela.every(isTeam) && (h.stiglja == null || isTeam(h.stiglja)))
+      && (g.tour == null || !!g.tour && isId(g.tour.id) && /^\d+-\d+$/.test(g.tour.key) && isPair(g.tour.teams) && g.tour.teams.every(Number.isInteger)))
     && (d.tournaments == null || Array.isArray(d.tournaments) && d.tournaments.every(t => t && isId(t.id)
       && typeof t.name === 'string' && Number.isFinite(t.date) && Array.isArray(t.teams) && t.teams.length >= 2
-      && t.teams.every(n => typeof n === 'string') && t.wins && typeof t.wins === 'object' && Object.values(t.wins).every(Number.isInteger)));
+      && t.teams.every(x => typeof x === 'string' || !!x && typeof x.name === 'string' && Array.isArray(x.players) && x.players.every(isId)) && t.wins && typeof t.wins === 'object' && Object.values(t.wins).every(Number.isInteger)));
 }
 
 // Single-elimination bracket. Round 1 match m is team m vs team half+m; missing teams up to the next power of 2 are byes (null).

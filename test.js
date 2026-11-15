@@ -24,6 +24,10 @@ assert.ok(!validBackup(null));
 assert.ok(!validBackup({ players: [{ id: "x');alert(1);//", name: 'X' }], games: [] })); // injection via id
 assert.ok(!validBackup({ ...backup, games: [{ ...backup.games[0], hands: [{ ...hand, score: ['1', 2] }] }] }));
 assert.ok(validBackup({ ...backup, tournaments: [{ id: 't1', name: 'T', date: 1, teams: ['A', 'B'], wins: { '0-0': 1 } }] }));
+assert.ok(validBackup({ ...backup, tournaments: [{ id: 't1', name: 'T', date: 1, teams: [{ name: 'A', players: ['a1', 'b'] }, 'B'], wins: {} }],
+  games: [{ ...backup.games[0], tour: { id: 't1', key: '0-0', teams: [0, 1] } }] }));
+assert.ok(!validBackup({ ...backup, games: [{ ...backup.games[0], tour: { id: 't1', key: "0');x(//", teams: [0, 1] } }] }));
+assert.ok(!validBackup({ ...backup, tournaments: [{ id: 't1', name: 'T', date: 1, teams: [{ name: 'A', players: ["x');y(//"] }, 'B'], wins: {} }] }));
 assert.ok(!validBackup({ ...backup, tournaments: [{ id: "t');x(//", name: 'T', date: 1, teams: ['A', 'B'], wins: {} }] }));
 
 const { bracket, liveWins } = require('./docs/bela.js');
