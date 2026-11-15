@@ -2,7 +2,7 @@
 self.addEventListener('fetch', e => {
   if (e.request.method !== 'GET') return;
   e.respondWith(
-    fetch(e.request)
+    fetch(e.request, { cache: 'no-cache' }) // revalidate, so index.html and bela.js never come from different versions
       .then(r => { const c = r.clone(); caches.open('bela').then(x => x.put(e.request, c)); return r; })
       .catch(() => caches.match(e.request))
   );

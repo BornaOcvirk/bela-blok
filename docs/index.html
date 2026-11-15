@@ -182,7 +182,7 @@ nav button.on i{transform:translateY(-3px)}
   <button data-v="history" onclick="histId=null;tid=null;go('history')"><i data-s="list"></i><span>Povijest</span></button>
   <button data-v="tour" onclick="tid=null;go('tour')"><i data-s="zvono"></i><span>Turnir</span></button>
 </nav>
-<script src="bela.js"></script>
+<script src="bela.js?v=dev"></script><!-- CI stamps the commit here so the app never runs an old cached copy -->
 <script>
 const KEY = 'belablok';
 let db = null;
@@ -245,6 +245,12 @@ function animatePage() {
   lastPage = page;
 }
 function render() {
+  try { draw(); } catch (e) { // show what broke instead of silently staying on the old page
+    console.error(e);
+    $('#app').innerHTML = `<div class="flash bad" role="alert">Nešto je pošlo krivo:<br><b>${esc(e.message)}</b><br><span class="small">Zatvori i ponovno otvori aplikaciju. Ako se ponovi, pošalji ovu poruku.</span></div>`;
+  }
+}
+function draw() {
   document.querySelectorAll('nav button').forEach(b => b.classList.toggle('on', b.dataset.v === view));
   placeInd();
   const g = db.games.find(x => x.id === shownId) || active();
