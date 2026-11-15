@@ -2,7 +2,7 @@
 <html lang="hr">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="Bela Blok">
@@ -18,7 +18,7 @@
 @media (prefers-color-scheme:dark){:root:not([data-theme=light]){--paper:#141612;--ink:#ecebe2;--soft:#9c9a8e;--rule:#2f3d35;--margin:#8a3a33;--green:#6fbf8f;--on-green:#141612;--bad:#ef7a6e;--hl:#1f3a2a;--mi:#4fa877;--vi:#b0722a;color-scheme:dark}}
 :root[data-theme=dark]{--paper:#141612;--ink:#ecebe2;--soft:#9c9a8e;--rule:#2f3d35;--margin:#8a3a33;--green:#6fbf8f;--on-green:#141612;--bad:#ef7a6e;--hl:#1f3a2a;--mi:#4fa877;--vi:#b0722a;color-scheme:dark}
 *{box-sizing:border-box}
-html,body{background:var(--paper)}
+html,body{background:var(--paper);touch-action:manipulation}
 body{margin:0;color:var(--ink);font:700 18px/1.35 "Times New Roman",Times,serif;padding-bottom:calc(64px + env(safe-area-inset-bottom));-webkit-tap-highlight-color:transparent}
 body::before{content:"";position:fixed;top:0;bottom:0;left:30px;width:2px;background:var(--margin);opacity:.75;pointer-events:none}
 button,input,select{font:inherit;color:inherit}
@@ -214,7 +214,7 @@ function handForm(g) {
   const col = i => `<div>
     <div class="colh">${MV(i)}</div>
     <input id="c${i}" type="number" inputmode="numeric" min="0" max="162" placeholder="0" aria-label="Bodovi ${MV(i)}"
-      value="${d.stiglja != null ? (d.stiglja === i ? 252 : 0) : d.cards[i]}" ${d.stiglja != null ? 'disabled' : ''} oninput="cardIn(${i},this.value)">
+      value="${d.stiglja != null ? (d.stiglja === i ? 252 : 0) : d.cards[i]}" ${d.stiglja != null ? 'disabled' : ''} oninput="cardIn(${i},this)">
     <div class="chips">${[20, 50, 100, 150, 200].map(v => `<button class="chip" onclick="addZv(${i},${v})">+${v}</button>`).join('')}
       <button class="chip ${d.bela[i] ? 'on' : ''}" aria-pressed="${!!d.bela[i]}" onclick="toggle('bela',${i})">bela</button>
       <button class="chip ${d.stiglja === i ? 'on' : ''}" aria-pressed="${d.stiglja === i}" onclick="toggle('stiglja',${i})">štiglja</button>
@@ -230,7 +230,10 @@ function handForm(g) {
     <div class="row"><button class="btn" onclick="draft=null;render()">Odustani</button>
       <button class="btn main" onclick="saveHand()">Spremi</button></div></div>`;
 }
-function cardIn(i, v) {
+function cardIn(i, el) {
+  const n = +el.value;
+  if (el.value !== '' && !(Number.isInteger(n) && n >= 0 && n <= HAND)) el.value = draft.cards[i]; // reject a keystroke past 162
+  const v = el.value;
   draft.cards[i] = v;
   draft.cards[1 - i] = v === '' ? '' : HAND - Number(v);
   $('#c' + (1 - i)).value = draft.cards[1 - i];
