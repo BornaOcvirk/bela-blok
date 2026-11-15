@@ -14,18 +14,19 @@
 <link rel="icon" href="icon-180.png">
 <title>Bela Blok</title>
 <style>
-@font-face{font-family:Fredoka;font-weight:400 700;font-display:swap;src:url(fredoka-latin.woff2) format('woff2');unicode-range:U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD}
-@font-face{font-family:Fredoka;font-weight:400 700;font-display:swap;src:url(fredoka-latin-ext.woff2) format('woff2');unicode-range:U+0100-02BA,U+02BD-02C5,U+02C7-02CC,U+02CE-02D7,U+02DD-02FF,U+0304,U+0308,U+0329,U+1D00-1DBF,U+1E00-1E9F,U+1EF2-1EFF,U+2020,U+20A0-20AB,U+20AD-20C4,U+2113,U+2C60-2C7F,U+A720-A7FF}
+@font-face{font-family:'Baloo 2';font-weight:400 800;font-display:swap;src:url(baloo-latin.woff2) format('woff2');unicode-range:U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD}
+@font-face{font-family:'Baloo 2';font-weight:400 800;font-display:swap;src:url(baloo-latin-ext.woff2) format('woff2');unicode-range:U+0100-02BA,U+02BD-02C5,U+02C7-02CC,U+02CE-02D7,U+02DD-02FF,U+0304,U+0308,U+0329,U+1D00-1DBF,U+1E00-1E9F,U+1EF2-1EFF,U+2020,U+20A0-20AB,U+20AD-20C4,U+2113,U+2C60-2C7F,U+A720-A7FF}
+@font-face{font-family:'Baloo 2';font-weight:400 800;font-display:swap;src:url(baloo-vietnamese.woff2) format('woff2');unicode-range:U+0102-0103,U+0110-0111,U+0128-0129,U+0168-0169,U+01A0-01A1,U+01AF-01B0,U+0300-0301,U+0303-0304,U+0308-0309,U+0323,U+0329,U+1EA0-1EF9,U+20AB}
 :root{--paper:#fbf8ef;--ink:#1b1b18;--soft:#6f6a5c;--rule:#b9cde0;--card:#fffdf6;--green:#1f5a3c;--on-green:#fbf8ef;--bad:#b3261e;--hl:#d6ecd9;--mi:#2b8a4e;--vi:#b8651c;color-scheme:light}
 @media (prefers-color-scheme:dark){:root:not([data-theme=light]){--paper:#141612;--ink:#ecebe2;--soft:#9c9a8e;--rule:#2f3d35;--card:#e8e3d3;--green:#6fbf8f;--on-green:#141612;--bad:#ef7a6e;--hl:#1f3a2a;--mi:#4fa877;--vi:#b0722a;color-scheme:dark}}
 :root[data-theme=dark]{--paper:#141612;--ink:#ecebe2;--soft:#9c9a8e;--rule:#2f3d35;--card:#e8e3d3;--green:#6fbf8f;--on-green:#141612;--bad:#ef7a6e;--hl:#1f3a2a;--mi:#4fa877;--vi:#b0722a;color-scheme:dark}
 *{box-sizing:border-box}
 html,body{background:var(--paper);touch-action:manipulation}
-body{margin:0;color:var(--ink);font:500 18px/1.35 Fredoka,ui-rounded,system-ui,sans-serif;padding-bottom:calc(64px + env(safe-area-inset-bottom));-webkit-tap-highlight-color:transparent}
+body{margin:0;color:var(--ink);font:500 18px/1.35 'Baloo 2',ui-rounded,system-ui,sans-serif;padding-bottom:calc(64px + env(safe-area-inset-bottom));-webkit-tap-highlight-color:transparent}
 button,input,select{font:inherit;color:inherit}
-header{display:flex;align-items:flex-end;justify-content:space-between;max-width:640px;margin:0 auto;padding:calc(14px + env(safe-area-inset-top)) 16px 4px}
+header{position:relative;display:flex;justify-content:center;max-width:640px;margin:0 auto;padding:calc(14px + env(safe-area-inset-top)) 16px 4px}
 h1{margin:0;font-size:30px;line-height:1.1;color:var(--green);border-bottom:4px double var(--green)}
-.theme{background:none;border:0;font-size:17px;padding:4px 0 4px 8px;color:var(--soft);text-decoration:underline;cursor:pointer}
+.theme{position:absolute;right:16px;top:calc(14px + env(safe-area-inset-top));background:none;border:0;font-size:17px;padding:4px 0 4px 8px;color:var(--soft);text-decoration:underline;cursor:pointer}
 main{max-width:640px;margin:0 auto;padding:8px 16px 16px}
 h2{margin:18px 0 8px;font-size:22px;color:var(--green)}
 .lbl{display:block;font-size:15px;color:var(--soft);margin:14px 0 4px}
@@ -79,6 +80,9 @@ input::placeholder{color:var(--soft);opacity:.6}
 .chip.on{background:var(--ink);color:var(--paper)}
 .chip.red{border-color:var(--bad);color:var(--bad)}
 .chip.guest{border-style:dashed}
+.hhead{display:flex;align-items:center;justify-content:space-between;gap:10px}
+.dealer{display:flex;align-items:center;justify-content:center;gap:10px;margin:12px 0 0;font-size:19px}
+.dealer i{width:22px;height:22px}
 .listed{display:flex;flex-wrap:wrap;gap:4px 10px;margin-top:6px}
 .listed button{border:0;background:none;padding:2px 0;color:var(--green);font-size:16px;text-decoration:underline;cursor:pointer}
 .preview{text-align:center;font-size:26px;margin:14px 0 10px;font-variant-numeric:tabular-nums}
@@ -108,7 +112,7 @@ nav button.on{color:var(--ink);text-decoration:underline;text-underline-offset:5
 :focus-visible{outline:2px dashed var(--green);outline-offset:2px}
 /* playing cards: srce, žir, list, zvono */
 svg.s{display:block;width:100%;height:100%}
-.brand{display:flex;align-items:center;gap:10px}
+.brand{display:flex;flex-direction:column;align-items:center;gap:6px}
 .fan{position:relative;width:104px;height:50px;flex:0 0 auto}
 .fan i{position:absolute;left:50%;top:2px;display:grid;place-items:center;width:26px;height:38px;margin-left:-13px;background:var(--card);border:1.5px solid #1b1b18;border-radius:5px;box-shadow:1px 2px 0 rgba(0,0,0,.18);transform:rotate(var(--r));transform-origin:50% 226%;transition:transform .25s}
 .fan i svg{width:17px;height:17px}
@@ -155,10 +159,10 @@ const active = () => db.games.find(g => winner(g) == null);
 const zvOf = (h, i) => sum(h.zv[i]) + h.bela[i] * 20;
 // Croatian/German-suited cards. Fixed colours on purpose: they're printed card faces, not theme ink.
 const SUIT = {
-  srce: '<svg class="s" viewBox="0 0 24 24" aria-hidden="true"><path fill="#d2382f" d="M12 21.5C5.8 17.3 2 13.6 2 9a5.2 5.2 0 0 1 10-2 5.2 5.2 0 0 1 10 2c0 4.6-3.8 8.3-10 12.5z"/></svg>',
-  zir: '<svg class="s" viewBox="0 0 24 24" aria-hidden="true"><path fill="#6b4423" d="M11 1.5h2v3.2h-2z"/><path fill="#c98a3e" d="M6.4 11.5h11.2c0 5.6-2.6 9.9-5.6 11-3-1.1-5.6-5.4-5.6-11z"/><path fill="#7a4b26" d="M4.5 10.6C4.5 6.6 8 4 12 4s7.5 2.6 7.5 6.6c0 .8-.6 1.4-1.4 1.4H5.9c-.8 0-1.4-.6-1.4-1.4z"/><path fill="none" stroke="#4f2f16" stroke-width="1" d="M7.5 7.8l1.8 3M12 6.5v4.5M16.5 7.8l-1.8 3"/></svg>',
-  list: '<svg class="s" viewBox="0 0 24 24" aria-hidden="true"><path fill="#3f8f3a" d="M12 1.5c5 5.2 8 8.6 8 12.4a6 6 0 0 1-7 6V23h-2v-3.1a6 6 0 0 1-7-6c0-3.8 3-7.2 8-12.4z"/><path fill="none" stroke="#d9f0c8" stroke-width="1.2" stroke-linecap="round" d="M12 6v13M12 11l-3-2.5M12 11l3-2.5M12 15l-3.5-2.5M12 15l3.5-2.5"/></svg>',
-  zvono: '<svg class="s" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="3.6" r="1.8" fill="none" stroke="#9a620a" stroke-width="1.6"/><circle cx="12" cy="13.6" r="8.6" fill="#ebb62b"/><path fill="none" stroke="#9a620a" stroke-width="1.6" d="M3.7 11.4h16.6"/><path stroke="#5e3d05" stroke-width="2" stroke-linecap="round" d="M12 16.5v5"/><circle cx="12" cy="16.3" r="1.7" fill="#5e3d05"/></svg>',
+  srce: '<svg class="s" viewBox="0 0 24 24" aria-hidden="true"><path fill="#d42f2a" stroke="#6b1410" stroke-width="1.2" stroke-linejoin="round" d="M12 21.2C5.6 16.9 2.2 13.2 2.2 8.9A4.9 4.9 0 0 1 12 6.9a4.9 4.9 0 0 1 9.8 2c0 4.3-3.4 8-9.8 12.3z"/></svg>',
+  zir: '<svg class="s" viewBox="0 0 24 24" aria-hidden="true"><path fill="#5a3416" stroke="#3d220c" stroke-width="1" d="M11.2 1.6h1.6v3.2h-1.6z"/><path fill="#e0a13a" stroke="#3d220c" stroke-width="1.2" stroke-linejoin="round" d="M6 11.6h12c0 5.2-2.6 9-6 10.8-3.4-1.8-6-5.6-6-10.8z"/><path fill="#7a4a22" stroke="#3d220c" stroke-width="1.2" stroke-linejoin="round" d="M4 10.2C4 6.6 7.6 4.3 12 4.3s8 2.3 8 5.9c0 1-.7 1.6-1.7 1.6H5.7c-1 0-1.7-.6-1.7-1.6z"/></svg>',
+  list: '<svg class="s" viewBox="0 0 24 24" aria-hidden="true"><path fill="none" stroke="#17461a" stroke-width="1.8" stroke-linecap="round" d="M12 15.5v6.8"/><path fill="#3c9a3a" stroke="#17461a" stroke-width="1.2" stroke-linejoin="round" d="M12 2c4 4 9 7.5 9 12a4.6 4.6 0 0 1-9 1.8A4.6 4.6 0 0 1 3 14c0-4.5 5-8 9-12z"/><path fill="none" stroke="#a8dc8f" stroke-width="1.1" stroke-linecap="round" d="M12 5v10"/></svg>',
+  zvono: '<svg class="s" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="3.4" r="1.7" fill="none" stroke="#5e3b06" stroke-width="1.4"/><circle cx="12" cy="13.3" r="8.6" fill="#f0b52a" stroke="#5e3b06" stroke-width="1.2"/><path fill="#c8452a" stroke="#5e3b06" stroke-width="1" stroke-linejoin="round" d="M3.84 10.6Q12 13.4 20.16 10.6L20.6 13Q12 15.9 3.4 13z"/><circle cx="12" cy="17.6" r="1.5" fill="#3a2403"/><path stroke="#3a2403" stroke-width="1.6" stroke-linecap="round" d="M12 18.6v3.2"/></svg>',
 };
 const SUITS = Object.keys(SUIT);
 const gameNo = g => db.games.filter(x => x.date <= g.date).length; // 1 = first game ever played
@@ -181,14 +185,12 @@ function render() {
 
 /* ---------- Igra ---------- */
 function newGameView() {
-  if (db.players.length < 4) return `<h2>Nova igra</h2>${fan('big')}
-    <p class="muted">Za igru trebaju 4 igrača. Upiši ih pod <u>Igrači</u>.</p>
-    <button class="btn main wide" style="width:100%" onclick="go('players')">Dodaj igrače</button>`;
   picks = picks.map(id => db.players.some(p => p.id === id) ? id : null); // drop deleted players
   const slot = i => `<button class="btn ${picks[i] ? 'on' : ''}" onclick="picks[${i}]=null;render()" ${picks[i] ? `aria-label="Makni ${esc(pname(picks[i]))}"` : 'disabled'}>${picks[i] ? esc(pname(picks[i])) + ' ✕' : '— igrač —'}</button>`;
-  return `<h2>Nova igra</h2>
+  return `<h2>Nova igra</h2>${db.players.length ? '' : fan('big') + '<p class="muted center">Dodaj igrače pod <u>Igrači</u> ili igraj s gostima.</p>'}
     <span class="lbl">MI</span><div class="row">${slot(0)}${slot(1)}</div>
     <span class="lbl">VI</span><div class="row">${slot(2)}${slot(3)}</div>
+    <p class="note" style="text-align:left">Za stolom redom (suprotno od kazaljke): MI 1, VI 1, MI 2, VI 2. Prvi miješa MI 1.</p>
     ${picks.includes(null) ? `<input id="q" type="search" placeholder="Traži igrača…" autocomplete="off" aria-label="Traži igrača"
       oninput="$('#plist').innerHTML=playerChips()" onkeydown="if(event.key==='Enter'){event.preventDefault();$('#plist button')?.click()}">
     <div id="plist" class="chips">${playerChips()}</div>` : ''}
@@ -203,12 +205,16 @@ function playerChips() {
     .sort((a, b) => a.name.localeCompare(b.name, 'hr'));
   const typed = $('#q')?.value.trim() ?? '';
   return list.map(p => `<button class="chip ${p.guest ? 'guest' : ''}" onclick="pickPlayer('${p.id}')">${esc(p.name)}${p.guest ? ' · gost' : ''}</button>`).join('')
-    + (typed && !nameTaken(typed) ? `<button class="chip guest" onclick="addGuest()">+ „${esc(typed)}” kao gost</button>` : '')
-    || '<span class="muted small">Nema igrača s tim imenom.</span>';
+    + `<button class="chip guest" onclick="addGuest()">+ ${typed && !nameTaken(typed) ? `„${esc(typed)}” kao gost` : 'Gost'}</button>`;
 }
 function addGuest() {
-  const id = uid();
-  db.players.push({ id, name: $('#q').value.trim().slice(0, 30), guest: true }); save(); pickPlayer(id);
+  const typed = $('#q').value.trim(), name = (typed && !nameTaken(typed) ? typed : prompt('Ime gosta:', 'Gost')?.trim())?.slice(0, 30);
+  if (!name) return;
+  const old = db.players.find(p => p.name.toLowerCase() === name.toLowerCase());
+  if (old && (!old.guest || picks.includes(old.id))) return alert(old.guest ? 'Taj gost je već u igri.' : 'Igrač s tim imenom već postoji.');
+  const id = old?.id ?? uid();
+  if (!old) { db.players.push({ id, name, guest: true }); save(); }
+  pickPlayer(id);
 }
 function pickPlayer(id) {
   const typed = !!$('#q').value;
@@ -239,8 +245,13 @@ function sheet(g) {
       : lead < 0 ? 'Izjednačeno' : `${MV(lead)} vodi za ${Math.abs(t[0] - t[1])}`}</p>` : ''}
     <p class="note">do ${g.target} · * zvao adut · Š štiglja · +zvanja</p>`;
 }
+const seats = g => [g.teams[0][0], g.teams[1][0], g.teams[0][1], g.teams[1][1]];
+const dealer = (g, k = 0) => seats(g)[((g.dealer ?? 0) + g.hands.length + k) % 4];
+function nextDealer() { const g = active(); g.dealer = ((g.dealer ?? 0) + 1) % 4; save(); render(); }
 function gameView(g) {
   return `${sheet(g)}
+    <div class="dealer"><i>${SUIT[SUITS[g.hands.length % 4]]}</i><span>Miješa: <b>${esc(pname(dealer(g)))}</b> <span class="muted small">· zatim ${esc(pname(dealer(g, 1)))}</span></span>
+      <button class="link small" onclick="nextDealer()" aria-label="Promijeni tko miješa">promijeni</button></div>
     ${draft ? handForm(g) : `
       <div class="row" style="margin-top:16px">
         <button class="btn main wide" style="flex:2" onclick="newHand()">+ Upiši ruku</button>
@@ -416,7 +427,6 @@ function stats(pid) {
 }
 function playersView() {
   const head = p => `<div class="top"><span class="name">${esc(p.name)}</span><span style="flex:0 0 auto">
-      <button class="chip ${p.guest ? 'on' : ''}" aria-pressed="${!!p.guest}" onclick="toggleGuest('${p.id}')" aria-label="${esc(p.name)} je gost (bez statistike)">gost</button>
       <button class="icon" onclick="renamePlayer('${p.id}')" aria-label="Preimenuj ${esc(p.name)}">✎</button>
       <button class="icon bad" onclick="delPlayer('${p.id}')" aria-label="Obriši ${esc(p.name)}">✕</button></span></div>`;
   const guests = db.players.filter(p => p.guest).sort((a, b) => a.name.localeCompare(b.name, 'hr'))
@@ -428,18 +438,17 @@ function playersView() {
   return `<h2>Igrači</h2>
     <form class="row" onsubmit="addPlayer(event)"><input id="pname" placeholder="Upiši ime…" maxlength="30" autocomplete="off" aria-label="Ime igrača">
     <button class="btn" style="flex:0 0 auto">Dodaj</button>
-    <button class="btn" type="button" style="flex:0 0 auto" onclick="addPlayer(event,true)">Gost</button></form>
+</form>
     ${list || (guests ? '' : fan('big') + '<p class="muted center">Još nema igrača.</p>')}
-    ${guests ? `<h2>Gosti</h2><p class="st" style="margin-top:-4px">Igraju normalno, ali im se ne vodi statistika.</p>${guests}` : ''}`;
+    ${guests ? `<h2>Gosti</h2><p class="st" style="margin-top:-4px">Dodaju se na stranici Igra. Ne vodi im se statistika.</p>${guests}` : ''}`;
 }
-function toggleGuest(id) { const p = db.players.find(x => x.id === id); p.guest = !p.guest; save(); render(); }
 const nameTaken = (n, except) => db.players.some(p => p.id !== except && p.name.toLowerCase() === n.toLowerCase());
-function addPlayer(e, guest = false) {
+function addPlayer(e) {
   e.preventDefault();
   const n = $('#pname').value.trim();
   if (!n) return;
   if (nameTaken(n)) return alert('Igrač s tim imenom već postoji.');
-  db.players.push(guest ? { id: uid(), name: n, guest } : { id: uid(), name: n }); save(); render(); $('#pname').focus();
+  db.players.push({ id: uid(), name: n }); save(); render(); $('#pname').focus();
 }
 function renamePlayer(id) {
   const p = db.players.find(x => x.id === id), n = prompt('Novo ime:', p.name)?.trim();
@@ -480,13 +489,18 @@ function historyView() {
       <summary><span>${date[0].toUpperCase() + date.slice(1)}</span><span class="muted small">${n} ${plural(n, 'igra', 'igre', 'igara')}</span></summary>
       ${d.games.map(item).join('')}</details>`;
   }).join('');
-  return `<h2>Povijest</h2>${games || fan('big') + '<p class="muted center">Još nema igara.</p>'}
+  const n = db.games.length;
+  return `<div class="hhead"><h2>Povijest</h2>${n ? `<button class="chip" onclick="toggleAllDays()" aria-label="Ukupno ${n} ${plural(n, 'igra', 'igre', 'igara')}, otvori ili zatvori sve dane">Σ ${n} ${plural(n, 'igra', 'igre', 'igara')}</button>` : ''}</div>${games || fan('big') + '<p class="muted center">Još nema igara.</p>'}
     <h2>Sigurnosna kopija</h2>
     <p class="st">Spremi sve igrače, igre i statistiku (npr. u iCloud ili pošalji sebi), ili ih vrati iz kopije.</p>
     <div class="row"><button class="btn" onclick="exportBackup()">Izvezi</button>
       <button class="btn" onclick="$('#imp').click()">Uvezi</button>
       ${window.Capacitor ? `<button class="btn" onclick="const t=prompt('Zalijepi kopiju:');if(t)importText(t)">Zalijepi</button>` : ''}</div>
     <input type="file" id="imp" accept=".json,application/json" hidden onchange="importBackup(this)">`;
+}
+function toggleAllDays() {
+  const keys = [...new Set(db.games.map(g => new Date(g.date).toDateString()))];
+  openDays = keys.every(k => openDays.has(k)) ? new Set() : new Set(keys); render();
 }
 function delGame(id) { if (confirm('Obrisati igru iz povijesti? Statistika igrača će se promijeniti.')) { db.games = db.games.filter(g => g.id !== id); histId = null; draft = null; save(); render(); } }
 
