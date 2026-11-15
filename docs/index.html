@@ -14,12 +14,14 @@
 <link rel="icon" href="icon-180.png">
 <title>Bela Blok</title>
 <style>
+@font-face{font-family:Fredoka;font-weight:400 700;font-display:swap;src:url(fredoka-latin.woff2) format('woff2');unicode-range:U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD}
+@font-face{font-family:Fredoka;font-weight:400 700;font-display:swap;src:url(fredoka-latin-ext.woff2) format('woff2');unicode-range:U+0100-02BA,U+02BD-02C5,U+02C7-02CC,U+02CE-02D7,U+02DD-02FF,U+0304,U+0308,U+0329,U+1D00-1DBF,U+1E00-1E9F,U+1EF2-1EFF,U+2020,U+20A0-20AB,U+20AD-20C4,U+2113,U+2C60-2C7F,U+A720-A7FF}
 :root{--paper:#fbf8ef;--ink:#1b1b18;--soft:#6f6a5c;--rule:#b9cde0;--card:#fffdf6;--green:#1f5a3c;--on-green:#fbf8ef;--bad:#b3261e;--hl:#d6ecd9;--mi:#2b8a4e;--vi:#b8651c;color-scheme:light}
 @media (prefers-color-scheme:dark){:root:not([data-theme=light]){--paper:#141612;--ink:#ecebe2;--soft:#9c9a8e;--rule:#2f3d35;--card:#e8e3d3;--green:#6fbf8f;--on-green:#141612;--bad:#ef7a6e;--hl:#1f3a2a;--mi:#4fa877;--vi:#b0722a;color-scheme:dark}}
 :root[data-theme=dark]{--paper:#141612;--ink:#ecebe2;--soft:#9c9a8e;--rule:#2f3d35;--card:#e8e3d3;--green:#6fbf8f;--on-green:#141612;--bad:#ef7a6e;--hl:#1f3a2a;--mi:#4fa877;--vi:#b0722a;color-scheme:dark}
 *{box-sizing:border-box}
 html,body{background:var(--paper);touch-action:manipulation}
-body{margin:0;color:var(--ink);font:700 18px/1.35 "Times New Roman",Times,serif;padding-bottom:calc(64px + env(safe-area-inset-bottom));-webkit-tap-highlight-color:transparent}
+body{margin:0;color:var(--ink);font:500 18px/1.35 Fredoka,ui-rounded,system-ui,sans-serif;padding-bottom:calc(64px + env(safe-area-inset-bottom));-webkit-tap-highlight-color:transparent}
 button,input,select{font:inherit;color:inherit}
 header{display:flex;align-items:flex-end;justify-content:space-between;max-width:640px;margin:0 auto;padding:calc(14px + env(safe-area-inset-top)) 16px 4px}
 h1{margin:0;font-size:30px;line-height:1.1;color:var(--green);border-bottom:4px double var(--green)}
@@ -88,6 +90,9 @@ input::placeholder{color:var(--soft);opacity:.6}
 .name{font-size:22px;overflow-wrap:anywhere}
 .st{font-size:15px;color:var(--soft);margin-top:2px}
 .icon{background:none;border:0;font-size:18px;padding:4px 6px;cursor:pointer}
+.item{display:flex;align-items:center;gap:12px}.item>.body{flex:1;min-width:0}
+.no{flex:0 0 auto;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;width:42px;height:56px;background:var(--card);color:#1b1b18;border:1.5px solid #1b1b18;border-radius:7px;box-shadow:1px 2px 0 rgba(0,0,0,.18);font-size:20px;font-weight:600;line-height:1}
+.no i{width:14px;height:14px}
 .hrow{display:flex;justify-content:space-between;gap:8px;font-size:19px}.hrow.win{color:var(--green)}
 nav{position:fixed;bottom:0;left:0;right:0;display:flex;justify-content:center;background:var(--paper);border-top:2px solid var(--ink);padding-bottom:env(safe-area-inset-bottom)}
 nav button{flex:1;max-width:200px;background:none;border:0;padding:8px 0 10px;font-size:18px;color:var(--soft);cursor:pointer}
@@ -95,20 +100,18 @@ nav button.on{color:var(--ink);text-decoration:underline;text-underline-offset:5
 :focus-visible{outline:2px dashed var(--green);outline-offset:2px}
 /* playing cards: srce, žir, list, zvono */
 svg.s{display:block;width:100%;height:100%}
-.brand{display:flex;align-items:flex-end;gap:14px}
-.fan{display:flex;padding:0 8px 4px}
-.fan i{display:grid;place-items:center;width:26px;height:38px;margin-left:-9px;background:var(--card);border:1.5px solid #1b1b18;border-radius:5px;box-shadow:1px 2px 0 rgba(0,0,0,.18);transform:rotate(var(--r));transform-origin:50% 130%;transition:transform .25s}
-.fan i:first-child{margin-left:0}
+.brand{display:flex;align-items:center;gap:10px}
+.fan{position:relative;width:104px;height:50px;flex:0 0 auto}
+.fan i{position:absolute;left:50%;top:2px;display:grid;place-items:center;width:26px;height:38px;margin-left:-13px;background:var(--card);border:1.5px solid #1b1b18;border-radius:5px;box-shadow:1px 2px 0 rgba(0,0,0,.18);transform:rotate(var(--r));transform-origin:50% 226%;transition:transform .25s}
 .fan i svg{width:17px;height:17px}
-.fan i:nth-child(1){--r:-18deg}.fan i:nth-child(2){--r:-6deg}.fan i:nth-child(3){--r:6deg}.fan i:nth-child(4){--r:18deg}
-.fan:active i:nth-child(1){--r:-28deg}.fan:active i:nth-child(2){--r:-10deg}.fan:active i:nth-child(3){--r:10deg}.fan:active i:nth-child(4){--r:28deg}
-.fan.big{justify-content:center;margin:28px 0 18px}
-.fan.big i{width:52px;height:76px;margin-left:-16px;border-radius:9px;border-width:2px}
-.fan.big i:first-child{margin-left:0}
+.fan i:nth-child(1){--r:-27deg}.fan i:nth-child(2){--r:-9deg}.fan i:nth-child(3){--r:9deg}.fan i:nth-child(4){--r:27deg}
+.fan:active i:nth-child(1){--r:-36deg}.fan:active i:nth-child(2){--r:-12deg}.fan:active i:nth-child(3){--r:12deg}.fan:active i:nth-child(4){--r:36deg}
+.fan.big{width:208px;height:100px;margin:28px auto 18px}
+.fan.big i{top:4px;width:52px;height:76px;margin-left:-26px;border-radius:9px;border-width:2px}
 .fan.big i svg{width:34px;height:34px}
 nav i{display:block;width:24px;height:24px;margin:0 auto 2px;transition:transform .2s}
 nav button:not(.on) i{filter:grayscale(1);opacity:.45}
-nav button.on i{transform:translateY(-2px) rotate(-8deg)}
+nav button.on i{transform:translateY(-3px)}
 .btn,.chip,.pick span{transition:transform .08s}
 .btn:active:not(:disabled),.chip:active,.pick span:active{transform:translateY(2px) scale(.97)}
 .flash svg{display:inline-block;width:30px;height:30px;vertical-align:-7px;margin-right:8px;transform-origin:50% 10%;animation:ring .5s ease-in-out 4}
@@ -150,6 +153,7 @@ const SUIT = {
   zvono: '<svg class="s" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="3.6" r="1.8" fill="none" stroke="#9a620a" stroke-width="1.6"/><circle cx="12" cy="13.6" r="8.6" fill="#ebb62b"/><path fill="none" stroke="#9a620a" stroke-width="1.6" d="M3.7 11.4h16.6"/><path stroke="#5e3d05" stroke-width="2" stroke-linecap="round" d="M12 16.5v5"/><circle cx="12" cy="16.3" r="1.7" fill="#5e3d05"/></svg>',
 };
 const SUITS = Object.keys(SUIT);
+const gameNo = g => db.games.filter(x => x.date <= g.date).length; // 1 = first game ever played
 const fan = (cls = '') => `<div class="fan ${cls}" aria-hidden="true">${SUITS.map(k => `<i>${SUIT[k]}</i>`).join('')}</div>`;
 
 function applyTheme() {
@@ -246,8 +250,7 @@ function handForm(g) {
     <input id="c${i}" type="number" inputmode="numeric" min="0" max="162" placeholder="0" aria-label="Bodovi ${MV(i)}"
       value="${d.stiglja != null ? (d.stiglja === i ? 252 : 0) : d.cards[i]}" ${d.stiglja != null ? 'disabled' : ''} oninput="cardIn(${i},this)">
     <div class="chips">${[20, 50, 100, 150, 200].map(v => `<button class="chip" onclick="addZv(${i},${v})">+${v}</button>`).join('')}
-      <button class="chip ${d.bela[i] ? 'on' : ''}" aria-pressed="${!!d.bela[i]}" onclick="toggle('bela',${i})">bela</button>
-      <button class="chip ${d.stiglja === i ? 'on' : ''}" aria-pressed="${d.stiglja === i}" onclick="toggle('stiglja',${i})">štiglja</button>
+      <button class="chip ${d.stiglja === i ? 'on' : ''}" aria-pressed="${d.stiglja === i}" onclick="toggleStiglja(${i})">ŠTIGLJA</button>
       <button class="chip red" onclick="belot(${i})">BELOT</button></div>
     <div class="listed">${d.zv[i].map((v, k) => `<button onclick="rmZv(${i},${k})" aria-label="Ukloni zvanje ${v}">${v} ✕</button>`).join('')}</div>
   </div>`;
@@ -272,11 +275,7 @@ function cardIn(i, el) {
 }
 function addZv(i, v) { draft.zv[i].push(v); render(); }
 function rmZv(i, k) { draft.zv[i].splice(k, 1); render(); }
-function toggle(what, i) {
-  if (what === 'bela') draft.bela[i] ^= 1;
-  else draft.stiglja = draft.stiglja === i ? null : i;
-  render();
-}
+function toggleStiglja(i) { draft.stiglja = draft.stiglja === i ? null : i; render(); }
 function buildHand() {
   const d = draft, cards = d.cards.map(Number);
   if (d.caller == null) return 'Odaberi tko je zvao adut.';
@@ -322,12 +321,11 @@ function overview(g) {
     ['Prošli', T(i => calls[i] - falls[i])],
     ['Pali', falls],
     ['Zvanja', T(i => sum(g.hands.map(h => zvOf(h, i))))],
-    ['Bela', count((h, i) => h.bela[i])],
     ['Štiglje', count((h, i) => h.stiglja === i)],
     ['Bodovi', totals(g.hands)],
   ];
   return `<button class="link" onclick="histId=null;render()">‹ natrag na povijest</button>
-    <h2 style="margin-top:6px">Pregled igre</h2>
+    <h2 style="margin-top:6px">Igra br. ${gameNo(g)}</h2>
     <p class="st" style="margin:-4px 0 10px">${new Date(g.date).toLocaleDateString('hr-HR')} · do ${g.target} · ${g.hands.length} ruku ·
       ${w == null ? 'u tijeku' : `pobjeda ${MV(w)}${g.belot != null ? ' (belot)' : ''}`}</p>
     ${sheet(g)}
@@ -439,10 +437,12 @@ function historyView() {
   if (open) return overview(open);
   const games = db.games.slice().sort((a, b) => b.date - a.date).map(g => {
     const t = totals(g.hands), w = winner(g);
-    return `<button class="line item" onclick="histId='${g.id}';render();scrollTo(0,0)"><span class="st">${new Date(g.date).toLocaleString('hr-HR', { dateStyle: 'medium', timeStyle: 'short' })}
+    const no = gameNo(g);
+    return `<button class="line item" onclick="histId='${g.id}';render();scrollTo(0,0)">
+      <span class="no">${no}<i>${SUIT[SUITS[(no - 1) % 4]]}</i></span><span class="body"><span class="st">${new Date(g.date).toLocaleString('hr-HR', { dateStyle: 'medium', timeStyle: 'short' })}
       · do ${g.target} · ${g.hands.length} ruku${g.belot != null ? ' · BELOT' : ''}${w == null ? ' · <u>u tijeku</u>' : ''}</span>
       ${[0, 1].map(i => `<span class="hrow ${w === i ? 'win' : ''}"><span>${MV(i)} · ${esc(teamName(g.teams[i]))}${w === i ? ' ✓' : ''}</span><span>${t[i]}</span></span>`).join('')}
-      <span class="st" style="text-align:right">pregled ›</span></button>`;
+      <span class="st" style="text-align:right">pregled ›</span></span></button>`;
   }).join('');
   return `<h2>Povijest</h2>${games || fan('big') + '<p class="muted center">Još nema igara.</p>'}
     <h2>Sigurnosna kopija</h2>
