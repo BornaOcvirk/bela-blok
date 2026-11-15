@@ -78,6 +78,7 @@ input::placeholder{color:var(--soft);opacity:.6}
 .chip{border:1.5px solid var(--ink);background:transparent;border-radius:999px;padding:6px 8px;font-size:16px;cursor:pointer}
 .chip.on{background:var(--ink);color:var(--paper)}
 .chip.red{border-color:var(--bad);color:var(--bad)}
+.chip.guest{border-style:dashed}
 .listed{display:flex;flex-wrap:wrap;gap:4px 10px;margin-top:6px}
 .listed button{border:0;background:none;padding:2px 0;color:var(--green);font-size:16px;text-decoration:underline;cursor:pointer}
 .preview{text-align:center;font-size:26px;margin:14px 0 10px;font-variant-numeric:tabular-nums}
@@ -93,6 +94,13 @@ input::placeholder{color:var(--soft);opacity:.6}
 .item{display:flex;align-items:center;gap:12px}.item>.body{flex:1;min-width:0}
 .no{flex:0 0 auto;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;width:42px;height:56px;background:var(--card);color:#1b1b18;border:1.5px solid #1b1b18;border-radius:7px;box-shadow:1px 2px 0 rgba(0,0,0,.18);font-size:20px;font-weight:600;line-height:1}
 .no i{width:14px;height:14px}
+.day{border-bottom:1px solid var(--rule)}
+.day summary{display:flex;align-items:baseline;gap:10px;padding:12px 0;cursor:pointer;list-style:none;font-size:19px}
+.day summary::-webkit-details-marker{display:none}
+.day summary::before{content:"›";display:inline-block;width:12px;font-size:24px;line-height:1;color:var(--green);transition:transform .2s}
+.day[open] summary::before{transform:rotate(90deg)}
+.day summary .muted{margin-left:auto;flex:0 0 auto}
+.day .item:last-child{border-bottom:0}
 .hrow{display:flex;justify-content:space-between;gap:8px;font-size:19px}.hrow.win{color:var(--green)}
 nav{position:fixed;bottom:0;left:0;right:0;display:flex;justify-content:center;background:var(--paper);border-top:2px solid var(--ink);padding-bottom:env(safe-area-inset-bottom)}
 nav button{flex:1;max-width:200px;background:none;border:0;padding:8px 0 10px;font-size:18px;color:var(--soft);cursor:pointer}
@@ -193,8 +201,14 @@ function playerChips() {
   const q = fold($('#q')?.value ?? '');
   const list = db.players.filter(p => !picks.includes(p.id) && fold(p.name).includes(q))
     .sort((a, b) => a.name.localeCompare(b.name, 'hr'));
-  return list.map(p => `<button class="chip" onclick="pickPlayer('${p.id}')">${esc(p.name)}</button>`).join('')
+  const typed = $('#q')?.value.trim() ?? '';
+  return list.map(p => `<button class="chip ${p.guest ? 'guest' : ''}" onclick="pickPlayer('${p.id}')">${esc(p.name)}${p.guest ? ' · gost' : ''}</button>`).join('')
+    + (typed && !nameTaken(typed) ? `<button class="chip guest" onclick="addGuest()">+ „${esc(typed)}” kao gost</button>` : '')
     || '<span class="muted small">Nema igrača s tim imenom.</span>';
+}
+function addGuest() {
+  const id = uid();
+  db.players.push({ id, name: $('#q').value.trim().slice(0, 30), guest: true }); save(); pickPlayer(id);
 }
 function pickPlayer(id) {
   const typed = !!$('#q').value;
@@ -401,24 +415,31 @@ function stats(pid) {
   return s;
 }
 function playersView() {
-  const list = db.players.map(p => ({ p, s: stats(p.id) })).sort((a, b) => b.s.w - a.s.w).map(({ p, s }) => `
-    <div class="line"><div class="top"><span class="name">${esc(p.name)}</span><span style="flex:0 0 auto">
+  const head = p => `<div class="top"><span class="name">${esc(p.name)}</span><span style="flex:0 0 auto">
+      <button class="chip ${p.guest ? 'on' : ''}" aria-pressed="${!!p.guest}" onclick="toggleGuest('${p.id}')" aria-label="${esc(p.name)} je gost (bez statistike)">gost</button>
       <button class="icon" onclick="renamePlayer('${p.id}')" aria-label="Preimenuj ${esc(p.name)}">✎</button>
-      <button class="icon bad" onclick="delPlayer('${p.id}')" aria-label="Obriši ${esc(p.name)}">✕</button></span></div>
+      <button class="icon bad" onclick="delPlayer('${p.id}')" aria-label="Obriši ${esc(p.name)}">✕</button></span></div>`;
+  const guests = db.players.filter(p => p.guest).sort((a, b) => a.name.localeCompare(b.name, 'hr'))
+    .map(p => `<div class="line">${head(p)}<div class="st">statistika se ne prati</div></div>`).join('');
+  const list = db.players.filter(p => !p.guest).map(p => ({ p, s: stats(p.id) })).sort((a, b) => b.s.w - a.s.w).map(({ p, s }) => `
+    <div class="line">${head(p)}
       <div class="st">${s.g} igara · ${s.w} pobjeda${s.g ? ` (${Math.round(s.w / s.g * 100)}%)` : ''} · ${s.pts} bodova</div>
       <div class="st">zvanja ${s.zv} · belot ${s.belot} · štiglje ${s.st} · padovi ${s.pad}</div></div>`).join('');
   return `<h2>Igrači</h2>
     <form class="row" onsubmit="addPlayer(event)"><input id="pname" placeholder="Upiši ime…" maxlength="30" autocomplete="off" aria-label="Ime igrača">
-    <button class="btn" style="flex:0 0 auto">Dodaj</button></form>
-    ${list || fan('big') + '<p class="muted center">Još nema igrača.</p>'}`;
+    <button class="btn" style="flex:0 0 auto">Dodaj</button>
+    <button class="btn" type="button" style="flex:0 0 auto" onclick="addPlayer(event,true)">Gost</button></form>
+    ${list || (guests ? '' : fan('big') + '<p class="muted center">Još nema igrača.</p>')}
+    ${guests ? `<h2>Gosti</h2><p class="st" style="margin-top:-4px">Igraju normalno, ali im se ne vodi statistika.</p>${guests}` : ''}`;
 }
+function toggleGuest(id) { const p = db.players.find(x => x.id === id); p.guest = !p.guest; save(); render(); }
 const nameTaken = (n, except) => db.players.some(p => p.id !== except && p.name.toLowerCase() === n.toLowerCase());
-function addPlayer(e) {
+function addPlayer(e, guest = false) {
   e.preventDefault();
   const n = $('#pname').value.trim();
   if (!n) return;
   if (nameTaken(n)) return alert('Igrač s tim imenom već postoji.');
-  db.players.push({ id: uid(), name: n }); save(); render(); $('#pname').focus();
+  db.players.push(guest ? { id: uid(), name: n, guest } : { id: uid(), name: n }); save(); render(); $('#pname').focus();
 }
 function renamePlayer(id) {
   const p = db.players.find(x => x.id === id), n = prompt('Novo ime:', p.name)?.trim();
@@ -432,17 +453,32 @@ function delPlayer(id) {
 }
 
 /* ---------- Povijest ---------- */
+let openDays = null;
+const plural = (n, one, few, many) => n % 10 === 1 && n % 100 !== 11 ? one : n % 10 >= 2 && n % 10 <= 4 && (n % 100 < 12 || n % 100 > 14) ? few : many;
 function historyView() {
   const open = db.games.find(g => g.id === histId);
   if (open) return overview(open);
-  const games = db.games.slice().sort((a, b) => b.date - a.date).map(g => {
+  const days = [];
+  for (const g of db.games.slice().sort((a, b) => b.date - a.date)) {
+    const k = new Date(g.date).toDateString();
+    if (days.at(-1)?.k !== k) days.push({ k, games: [] });
+    days.at(-1).games.push(g);
+  }
+  openDays ??= new Set(days.slice(0, 1).map(d => d.k)); // newest day starts open
+  const item = g => {
     const t = totals(g.hands), w = winner(g);
     const no = gameNo(g);
     return `<button class="line item" onclick="histId='${g.id}';render();scrollTo(0,0)">
-      <span class="no">${no}<i>${SUIT[SUITS[(no - 1) % 4]]}</i></span><span class="body"><span class="st">${new Date(g.date).toLocaleString('hr-HR', { dateStyle: 'medium', timeStyle: 'short' })}
+      <span class="no">${no}<i>${SUIT[SUITS[(no - 1) % 4]]}</i></span><span class="body"><span class="st">${new Date(g.date).toLocaleTimeString('hr-HR', { timeStyle: 'short' })}
       · do ${g.target} · ${g.hands.length} ruku${g.belot != null ? ' · BELOT' : ''}${w == null ? ' · <u>u tijeku</u>' : ''}</span>
       ${[0, 1].map(i => `<span class="hrow ${w === i ? 'win' : ''}"><span>${MV(i)} · ${esc(teamName(g.teams[i]))}${w === i ? ' ✓' : ''}</span><span>${t[i]}</span></span>`).join('')}
       <span class="st" style="text-align:right">pregled ›</span></span></button>`;
+  };
+  const games = days.map(d => {
+    const date = new Date(d.games[0].date).toLocaleDateString('hr-HR', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' }), n = d.games.length;
+    return `<details class="day" ${openDays.has(d.k) ? 'open' : ''} ontoggle="openDays[this.open ? 'add' : 'delete']('${d.k}')">
+      <summary><span>${date[0].toUpperCase() + date.slice(1)}</span><span class="muted small">${n} ${plural(n, 'igra', 'igre', 'igara')}</span></summary>
+      ${d.games.map(item).join('')}</details>`;
   }).join('');
   return `<h2>Povijest</h2>${games || fan('big') + '<p class="muted center">Još nema igara.</p>'}
     <h2>Sigurnosna kopija</h2>
