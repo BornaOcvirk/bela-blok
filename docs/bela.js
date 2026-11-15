@@ -34,7 +34,7 @@ function validBackup(d) {
   return !!d && Array.isArray(d.players) && Array.isArray(d.games)
     && d.players.every(p => p && isId(p.id) && typeof p.name === 'string')
     && d.games.every(g => g && isId(g.id) && Number.isFinite(g.target) && (g.belot == null || isTeam(g.belot))
-      && isPair(g.teams) && g.teams.every(t => isPair(t) && t.every(isId)) && Array.isArray(g.hands)
+      && isPair(g.teams) && g.teams.every(t => Array.isArray(t) && (t.length === 2 || !t.length) && t.every(isId)) && Array.isArray(g.hands)
       && g.hands.every(h => h && isTeam(h.caller) && isPair(h.score) && h.score.every(Number.isFinite)
         && isPair(h.zv) && h.zv.every(z => Array.isArray(z) && z.every(Number.isFinite))
         && isPair(h.bela) && h.bela.every(isTeam) && (h.stiglja == null || isTeam(h.stiglja)))

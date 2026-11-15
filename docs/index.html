@@ -97,11 +97,15 @@ input::placeholder{color:var(--soft);opacity:.6}
 .chip.on{background:var(--ink);color:var(--paper)}
 .chip.red{border-color:var(--bad);color:var(--bad)}
 .chip.guest{border-style:dashed}
+#plist{justify-content:center}
+.zvs{display:flex;flex-direction:column;gap:8px;margin-top:10px}.zvr{display:flex;gap:6px}
+.zvb{flex:1;position:relative;border:2px solid var(--ink);background:transparent;border-radius:12px;padding:10px 6px;font-size:21px;font-weight:600;cursor:pointer}
+.zvb.on{border-color:var(--green);color:var(--green);background:var(--hl)}
+.zvb b{position:absolute;top:-9px;right:-5px;min-width:30px;padding:0 6px;border-radius:999px;background:var(--green);color:var(--on-green);font-size:15px;line-height:22px}
+.zvm{flex:0 0 44px;border:2px solid var(--bad);background:transparent;color:var(--bad);border-radius:12px;font-size:24px;cursor:pointer}
 .hhead{display:flex;align-items:center;justify-content:space-between;gap:10px}
 .dealer{display:flex;flex-wrap:wrap;align-items:center;justify-content:center;gap:8px;margin:12px 0 0;font-size:19px}
 .dealer i{width:22px;height:22px}
-.listed{display:flex;flex-wrap:wrap;gap:4px 10px;margin-top:6px}
-.listed button{border:0;background:none;padding:2px 0;color:var(--green);font-size:16px;text-decoration:underline;cursor:pointer}
 .preview{text-align:center;font-size:26px;margin:14px 0 10px;font-variant-numeric:tabular-nums}
 .flash{border:4px double var(--green);border-radius:16px;color:var(--green);text-align:center;padding:14px;font-size:22px;margin:8px 0 12px}
 /* turnir */
@@ -161,8 +165,8 @@ svg.s{display:block;width:100%;height:100%}
 nav i{display:block;width:24px;height:24px;margin:0 auto 2px;transition:transform .2s}
 nav button:not(.on) i{filter:grayscale(1);opacity:.45}
 nav button.on i{transform:translateY(-3px)}
-.btn,.chip,.pick span{transition:transform .08s}
-.btn:active:not(:disabled),.chip:active,.pick span:active{transform:translateY(2px) scale(.97)}
+.btn,.chip,.pick span,.zvb,.zvm{transition:transform .08s}
+.btn:active:not(:disabled),.chip:active,.pick span:active,.zvb:active,.zvm:active{transform:translateY(2px) scale(.97)}
 .flash svg{display:inline-block;width:30px;height:30px;vertical-align:-7px;margin-right:8px;transform-origin:50% 10%;animation:ring .5s ease-in-out 4}
 .confetti{position:fixed;inset:0;overflow:hidden;pointer-events:none;z-index:10}
 .confetti i{position:absolute;top:-16px;width:8px;height:12px;border-radius:2px;animation:fall linear forwards}
@@ -266,13 +270,14 @@ function draw() {
 function newGameView() {
   picks = picks.map(id => db.players.some(p => p.id === id) ? id : null); // drop deleted players
   const slot = i => slotBtn(picks[i], `picks[${i}]=null`);
-  return `<h2>Nova igra</h2>${db.players.length ? '' : fan('big') + '<p class="muted center">Dodaj igrače pod <u>Igrači</u> ili igraj s gostima.</p>'}
+  return `<h2>Nova igra</h2>${db.players.length ? '' : fan('big') + '<p class="muted center">Dodaj igrače pod <u>Igrači</u>, igraj s gostima ili bez igrača.</p>'}
     <span class="lbl">MI</span><div class="row">${slot(0)}${slot(1)}</div>
     <span class="lbl">VI</span><div class="row">${slot(2)}${slot(3)}</div>
     ${picks.includes(null) ? finder() : ''}
     <span class="lbl">Igra se do</span><div class="row pick">${[501, 701, 1001].map(t =>
       `<label><input type="radio" name="target" value="${t}" ${t === target ? 'checked' : ''} onchange="target=${t}"><span>${t}</span></label>`).join('')}</div>
-    <button class="btn main wide" style="width:100%;margin-top:20px" onclick="startGame()">Počni igru</button>`;
+    <button class="btn main wide" style="width:100%;margin-top:20px" onclick="startGame()">Počni igru</button>
+    <button class="btn wide" style="width:100%;margin-top:10px" onclick="startGame(true)">Igraj bez igrača</button>`;
 }
 const slotBtn = (id, clear) => `<button class="btn ${id ? 'on' : ''}" onclick="${clear};render()" ${id ? `aria-label="Makni ${esc(pname(id))}"` : 'disabled'}>${id ? esc(pname(id)) + ' ✕' : '— igrač —'}</button>`;
 const finder = () => `<input id="q" type="search" placeholder="Traži igrača…" autocomplete="off" aria-label="Traži igrača"
@@ -304,9 +309,9 @@ function pickPlayer(id) {
   const s = slots(); s[s.indexOf(null)] = id; render();
   if (typed) $('#q')?.focus(); // keep the keyboard up while typing names
 }
-function startGame() {
-  if (picks.includes(null)) return alert('Odaberi 4 igrača.');
-  db.games.push({ id: uid(), date: Date.now(), teams: [picks.slice(0, 2), picks.slice(2)], target, hands: [], belot: null });
+function startGame(anon) { // anon: just MI vs VI, no names and no player stats
+  if (!anon && picks.includes(null)) return alert('Odaberi 4 igrača.');
+  db.games.push({ id: uid(), date: Date.now(), teams: anon ? [[], []] : [picks.slice(0, 2), picks.slice(2)], target, hands: [], belot: null });
   picks = [null, null, null, null]; save(); render();
 }
 
@@ -348,7 +353,7 @@ function pickSeat(i) { pend = i; $('#sheet .seats').outerHTML = seats(i); $('#sh
 function setDealer(i) { const g = active(); g.dealer = ((i - g.hands.length) % 4 + 4) % 4; pickDealer = false; save(); render(); }
 function gameView(g) {
   const w = winner(g);
-  if (w != null) return `${tourLine(g)}<div class="flash" role="status">${SUIT.zvono}${g.belot != null ? 'BELOT! ' : ''}Pobjeda: ${MV(w)} — ${esc(teamName(g.teams[w]))}!</div>
+  if (w != null) return `${tourLine(g)}<div class="flash" role="status">${SUIT.zvono}${g.belot != null ? 'BELOT! ' : ''}Pobjeda: ${MV(w)}${g.teams[w].length ? ' — ' + esc(teamName(g.teams[w])) : ''}!</div>
     ${sheet(g)}${draft?.gid === g.id ? handForm(g) : ''}
     ${tourOf(g) ? tourButtons(tourOf(g)) : `
     <button class="btn main wide" style="width:100%;margin-top:16px" onclick="rematch('${g.id}')">Iste ekipe, nova igra</button>
@@ -383,10 +388,10 @@ function handForm(g) {
     <div class="colh">${MV(i)}</div>
     <input id="c${i}" type="number" inputmode="numeric" min="0" max="162" placeholder="0" aria-label="Bodovi ${MV(i)}"
       value="${d.stiglja != null ? (d.stiglja === i ? 252 : 0) : d.cards[i]}" ${d.stiglja != null ? 'disabled' : ''} oninput="cardIn(${i},this)">
-    <div class="chips">${[20, 50, 100, 150, 200].map(v => `<button class="chip" onclick="addZv(${i},${v})">+${v}</button>`).join('')}
-      <button class="chip ${d.stiglja === i ? 'on' : ''}" aria-pressed="${d.stiglja === i}" onclick="toggleStiglja(${i})">ŠTIGLJA</button>
+    <div class="zvs">${[20, 50, 100, 150, 200].map(v => { const n = d.zv[i].filter(x => x === v).length;
+      return `<div class="zvr"><button class="zvb ${n ? 'on' : ''}" onclick="addZv(${i},${v})" aria-label="Zvanje ${v}${n ? `, upisano ${n}×` : ''}">+${v}${n ? `<b>×${n}</b>` : ''}</button>${n ? `<button class="zvm" onclick="rmZv(${i},${v})" aria-label="Ukloni jedno zvanje ${v}">−</button>` : ''}</div>`; }).join('')}</div>
+    <div class="chips"><button class="chip ${d.stiglja === i ? 'on' : ''}" aria-pressed="${d.stiglja === i}" onclick="toggleStiglja(${i})">ŠTIGLJA</button>
       ${d.idx == null ? `<button class="chip red" onclick="belot(${i})">BELOT</button>` : ''}</div>
-    <div class="listed">${d.zv[i].map((v, k) => `<button onclick="rmZv(${i},${k})" aria-label="Ukloni zvanje ${v}">${v} ✕</button>`).join('')}</div>
   </div>`;
   const pip = SUIT[SUITS[(d.idx ?? g.hands.length) % 4]]; // each hand gets the next suit
   return `<div class="entry"><span class="pip tr">${pip}</span><span class="pip bl">${pip}</span>
@@ -410,7 +415,7 @@ function cardIn(i, el) {
   $('#preview').innerHTML = previewText();
 }
 function addZv(i, v) { draft.zv[i].push(v); render(); }
-function rmZv(i, k) { draft.zv[i].splice(k, 1); render(); }
+function rmZv(i, v) { draft.zv[i].splice(draft.zv[i].lastIndexOf(v), 1); render(); }
 function toggleStiglja(i) { draft.stiglja = draft.stiglja === i ? null : i; render(); }
 function buildHand() {
   const d = draft, cards = d.cards.map(Number);
@@ -452,7 +457,7 @@ function confetti() {
 }
 function belot(i) {
   const g = active();
-  if (!confirm(`BELOT za ${MV(i)} (${teamName(g.teams[i])})? Igra odmah završava pobjedom.`)) return;
+  if (!confirm(`BELOT za ${MV(i)}${g.teams[i].length ? ` (${teamName(g.teams[i])})` : ''}? Igra odmah završava pobjedom.`)) return;
   g.belot = i; draft = null; pickBelot = false; shownId = g.id; syncTour(g); save();
   render(); confetti();
 }
@@ -480,7 +485,7 @@ function overview(g) {
       ${w == null ? 'u tijeku' : `pobjeda ${MV(w)}${g.belot != null ? ' (belot)' : ''}`}</p>
     ${sheet(g, false)}
     <h2>Tijek igre</h2>
-    <div class="legend">${T(i => `<span>${swatch(i)}${MV(i)} · ${esc(teamName(g.teams[i]))}</span>`).join('')}</div>
+    <div class="legend">${T(i => `<span>${swatch(i)}${MV(i)}${g.teams[i].length ? ' · ' + esc(teamName(g.teams[i])) : ''}</span>`).join('')}</div>
     ${g.hands.length ? chart(g) : '<p class="muted">Još nema upisanih ruku.</p>'}
     <h2>Statistika</h2>
     <table class="sheet stat">
@@ -886,7 +891,7 @@ function historyView() {
     return `<button class="line item" onclick="histId='${g.id}';render();scrollTo(0,0)">
       <span class="no">${no}<i>${SUIT[SUITS[(no - 1) % 4]]}</i></span><span class="body"><span class="st">${new Date(g.date).toLocaleTimeString('hr-HR', { timeStyle: 'short' })}
       · do ${g.target} · ${g.hands.length} ruku${g.belot != null ? ' · BELOT' : ''}${w == null ? ' · <u>u tijeku</u>' : ''}</span>
-      ${[0, 1].map(i => `<span class="hrow ${w === i ? 'win' : ''}"><span>${MV(i)} · ${esc(teamName(g.teams[i]))}${w === i ? ' ✓' : ''}</span><span>${t[i]}</span></span>`).join('')}
+      ${[0, 1].map(i => `<span class="hrow ${w === i ? 'win' : ''}"><span>${MV(i)}${g.teams[i].length ? ' · ' + esc(teamName(g.teams[i])) : ''}${w === i ? ' ✓' : ''}</span><span>${t[i]}</span></span>`).join('')}
       <span class="st" style="text-align:right">pregled ›</span></span></button>`;
   };
   const games = days.map(d => {

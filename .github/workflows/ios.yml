@@ -21,14 +21,14 @@ jobs:
           node-version: 22
       - run: npm ci
       - run: npm test
-      - run: node make-icon.js
+      - run: node make-icon.js splash # app icon is docs/icon-1024.png, drawn locally with node make-icon.js
       - name: Stamp version on bela.js (an updated app must not run an old cached copy)
         run: sed -i '' "s/bela\.js?v=[a-z0-9]*/bela.js?v=${GITHUB_SHA::7}/" docs/index.html && grep -o 'bela.js?v=[a-z0-9]*' docs/index.html
 
       - name: Create Xcode project
         run: |
           npx cap add ios --packagemanager SPM
-          for f in ios/App/App/Assets.xcassets/AppIcon.appiconset/*.png; do cp native/icon-1024.png "$f"; done
+          for f in ios/App/App/Assets.xcassets/AppIcon.appiconset/*.png; do cp docs/icon-1024.png "$f"; done
           for f in ios/App/App/Assets.xcassets/Splash.imageset/*.png; do cp native/splash.png "$f"; done
           npx cap sync ios
 

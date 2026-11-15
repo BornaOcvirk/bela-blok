@@ -20,6 +20,8 @@ const hand = { caller: 0, score: [100, 62], zv: [[20], []], bela: [0, 1], stiglj
 const backup = { players: [{ id: 'a1', name: 'Ana' }], games: [{ id: 'g1', target: 1001, belot: null, teams: [['a1', 'b'], ['c', 'd']], hands: [hand] }] };
 assert.ok(validBackup(backup));
 assert.ok(validBackup({ players: [], games: [] }));
+assert.ok(validBackup({ ...backup, games: [{ ...backup.games[0], teams: [[], []] }] })); // game without players
+assert.ok(!validBackup({ ...backup, games: [{ ...backup.games[0], teams: [['a1'], []] }] }));
 assert.ok(!validBackup(null));
 assert.ok(!validBackup({ players: [{ id: "x');alert(1);//", name: 'X' }], games: [] })); // injection via id
 assert.ok(!validBackup({ ...backup, games: [{ ...backup.games[0], hands: [{ ...hand, score: ['1', 2] }] }] }));
