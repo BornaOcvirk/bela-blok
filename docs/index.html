@@ -53,7 +53,8 @@ input::placeholder{color:var(--soft);opacity:.6}
 .sheet th+th,.sheet td+td{border-left:2px solid var(--ink)}
 .sheet th{font-size:32px;line-height:1;padding-top:8px;border-bottom:2px solid var(--ink)}
 .sheet th small{display:block;font-size:14px;color:var(--soft);padding:4px 0 6px;overflow-wrap:anywhere}
-.sheet td{font-size:24px;height:40px}
+.sheet td{position:relative;font-size:24px;height:40px}
+.mark{position:absolute;top:50%;width:24px;height:24px;margin-top:-12px}.mark.l{left:6px}.mark.r{right:6px}
 .sheet tr.hand{cursor:pointer}.sheet tr.hand:active td,.sheet tr.editing td{background:var(--hl)}
 .sheet sup{font-size:12px;color:var(--soft);margin-left:2px}
 .sheet .zv{font-size:13px;color:var(--green);margin-left:4px}
@@ -133,6 +134,9 @@ nav button.on i{transform:translateY(-3px)}
 .btn,.chip,.pick span{transition:transform .08s}
 .btn:active:not(:disabled),.chip:active,.pick span:active{transform:translateY(2px) scale(.97)}
 .flash svg{display:inline-block;width:30px;height:30px;vertical-align:-7px;margin-right:8px;transform-origin:50% 10%;animation:ring .5s ease-in-out 4}
+.confetti{position:fixed;inset:0;overflow:hidden;pointer-events:none;z-index:10}
+.confetti i{position:absolute;top:-16px;width:8px;height:12px;border-radius:2px;animation:fall linear forwards}
+@keyframes fall{to{transform:translate(var(--x),110vh) rotate(var(--r))}}
 @keyframes ring{25%{transform:rotate(20deg)}75%{transform:rotate(-20deg)}}
 @media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
 </style>
@@ -155,7 +159,7 @@ db = db || { players: [], games: [], theme: 'auto' };
 const save = () => { try { localStorage.setItem(KEY, JSON.stringify(db)); } catch { alert('Spremanje nije uspjelo!'); } };
 
 let pickDealer = false, lastPage = null;
-let view = 'game', draft = null, flash = '', pickBelot = false, histId = null, cd = null, picks = [null, null, null, null], target = 1001;
+let view = 'game', draft = null, shownId = null, pickBelot = false, histId = null, cd = null, picks = [null, null, null, null], target = 1001;
 const $ = s => document.querySelector(s);
 const esc = s => String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 const uid = () => Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
@@ -173,6 +177,10 @@ srce: '<svg class="s" viewBox="0 0 24 24" aria-hidden="true"><path fill="#e0332a
   zvono: '<svg class="s" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12.5" r="9" fill="#f3c51c"/><path fill="#d8402a" d="M3.2 14.2Q12 10.4 20.4 9.3L21 12.3Q12.6 13.6 4.2 16.9z"/><path fill="none" stroke="#2e8b34" stroke-width="1.8" stroke-linecap="round" d="M10 19.2c1.1-1.4 2.2 1 3.3-.4s2.2 1 3.3-.4"/><path stroke="#3a2a05" stroke-width="2.4" stroke-linecap="round" d="M8.6 6.2l1.8 1.8"/><circle cx="12" cy="12.5" r="9" fill="none" stroke="#3a2a05" stroke-width="1.1"/></svg>',
 };
 const SUITS = Object.keys(SUIT);
+const MARK = {
+  pad: '<svg class="s" viewBox="0 0 24 24"><title>pad</title><circle cx="12" cy="12" r="11.5" fill="#d42f2a"/><g transform="rotate(28 12 12)" fill="none" stroke="#fff" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="17.6" r="2.1" fill="#fff" stroke="none"/><path d="M12 15.1V9.6L9.2 5.4M12 9.6l2.8-4.2M12 13.4l-3.4-2.6M12 13.4l3.4-2.6"/></g><path fill="none" stroke="#fff" stroke-width="1.3" stroke-linecap="round" d="M4.6 8.6h2.6M4.2 11.4h2"/></svg>',
+  stiglja: '<svg class="s" viewBox="0 0 24 24"><title>štiglja</title><circle cx="12" cy="12" r="11.5" fill="#d42f2a"/><path fill="#fff" d="M5.5 12.2 7 5.6l3 4.3L12 4l2 5.9 3-4.3 1.5 6.6z"/><g fill="#fff"><circle cx="7" cy="5.2" r="1.3"/><circle cx="12" cy="3.8" r="1.3"/><circle cx="17" cy="5.2" r="1.3"/></g><path fill="#fff" d="M6.6 13.2h10.8a5.4 5.4 0 0 1-10.8 0z"/><g fill="#d42f2a"><ellipse cx="9.7" cy="15" rx="1.3" ry=".9"/><ellipse cx="14.3" cy="15" rx="1.3" ry=".9"/></g></svg>',
+};
 const gameNo = g => db.games.filter(x => x.date <= g.date).length; // 1 = first game ever played
 const fan = (cls = '') => `<div class="fan ${cls}" aria-hidden="true">${SUITS.map(k => `<i>${SUIT[k]}</i>`).join('')}</div>`;
 
@@ -201,10 +209,8 @@ function animatePage() {
 function render() {
   document.querySelectorAll('nav button').forEach(b => b.classList.toggle('on', b.dataset.v === view));
   placeInd();
-  const g = active();
-  $('#app').innerHTML = view === 'players' ? playersView() : view === 'history' ? historyView()
-    : (flash ? `<div class="flash" role="status">${SUIT.zvono}${flash}</div>` : '') + (g ? gameView(g) : newGameView());
-  flash = '';
+  const g = db.games.find(x => x.id === shownId) || active();
+  $('#app').innerHTML = view === 'players' ? playersView() : view === 'history' ? historyView() : g ? gameView(g) : newGameView();
   animatePage();
 }
 
@@ -215,7 +221,6 @@ function newGameView() {
   return `<h2>Nova igra</h2>${db.players.length ? '' : fan('big') + '<p class="muted center">Dodaj igrače pod <u>Igrači</u> ili igraj s gostima.</p>'}
     <span class="lbl">MI</span><div class="row">${slot(0)}${slot(1)}</div>
     <span class="lbl">VI</span><div class="row">${slot(2)}${slot(3)}</div>
-    <p class="note" style="text-align:left">MI 1 si ti · VI 1 desni protivnik · MI 2 partner · VI 2 lijevi protivnik. Prvi miješaš ti, dalje suprotno od kazaljke.</p>
     ${picks.includes(null) ? `<input id="q" type="search" placeholder="Traži igrača…" autocomplete="off" aria-label="Traži igrača"
       oninput="$('#plist').innerHTML=playerChips()" onkeydown="if(event.key==='Enter'){event.preventDefault();$('#plist button')?.click()}">
     <div id="plist" class="chips">${playerChips()}</div>` : ''}
@@ -256,8 +261,9 @@ function sheet(g) {
   const t = totals(g.hands), w = winner(g);
   const cell = (h, i) => {
     const pad = h.fell && h.caller === i, z = zvOf(h, i);
-    if (pad) return '<td class="bad">0<sup class="bad">pad</sup></td>'; // fallen team loses its zvanja too
-    return `<td>${h.score[i]}${h.caller === i ? '<sup>*</sup>' : ''}${h.stiglja === i ? '<sup>Š</sup>' : ''}${z ? `<span class="zv">+${z}</span>` : ''}</td>`;
+    const mark = k => `<span class="mark ${i ? 'r' : 'l'}">${MARK[k]}</span>`;
+    if (pad) return `<td class="bad">${mark('pad')}0</td>`; // fallen team loses its zvanja too
+    return `<td>${h.stiglja === i ? mark('stiglja') : ''}${h.score[i]}${h.caller === i ? '<sup>*</sup>' : ''}${z ? `<span class="zv">+${z}</span>` : ''}</td>`;
   };
   const rows = g.hands.map((h, k) => `<tr class="hand ${draft?.gid === g.id && draft.idx === k ? 'editing' : ''}" role="button" tabindex="0" aria-label="Ispravi ruku ${k + 1}"
     onclick="editHand('${g.id}',${k})" onkeydown="if(event.key==='Enter')this.click()">${cell(h, 0)}${cell(h, 1)}</tr>`);
@@ -269,12 +275,16 @@ function sheet(g) {
       <tfoot><tr class="tot"><td class="${L(0)}">${t[0]}</td><td class="${L(1)}">${t[1]}</td></tr></tfoot></table>
     ${g.hands.length ? `<p class="diff">${w != null ? `Pobjeda ${MV(w)}${g.belot != null ? ' — belot' : ` za ${Math.abs(t[0] - t[1])}`}`
       : lead < 0 ? 'Izjednačeno' : `${MV(lead)} vodi za ${Math.abs(t[0] - t[1])}`}</p>` : ''}
-    <p class="note">do ${g.target} · * zvao adut · Š štiglja · +zvanja · dodirni red za ispravak</p>`;
+    <p class="note">do ${g.target}</p>`;
 }
 const SEAT = ['ja', 'desni protivnik', 'partner', 'lijevi protivnik'];
 const dealer = (g, k = 0) => ((g.dealer ?? 0) + g.hands.length + k) % 4; // index into SEAT
 function setDealer(i) { const g = active(); g.dealer = ((i - g.hands.length) % 4 + 4) % 4; pickDealer = false; save(); render(); }
 function gameView(g) {
+  const w = winner(g);
+  if (w != null) return `<div class="flash" role="status">${SUIT.zvono}${g.belot != null ? 'BELOT! ' : ''}Pobjeda: ${MV(w)} — ${esc(teamName(g.teams[w]))}!</div>
+    ${sheet(g)}${draft?.gid === g.id ? handForm(g) : ''}
+    <button class="btn main wide" style="width:100%;margin-top:16px" onclick="shownId=null;draft=null;render()">Nova igra</button>`;
   return `${sheet(g)}
     <div class="dealer"><i>${SUIT[SUITS[g.hands.length % 4]]}</i><span>${dealer(g) ? 'Miješa' : 'Miješam'}</span>
       <button class="chip on" aria-expanded="${pickDealer}" aria-label="Miješa ${SEAT[dealer(g)]}, promijeni" onclick="pickDealer=!pickDealer;render()">${SEAT[dealer(g)]} ▾</button>
@@ -286,9 +296,7 @@ function gameView(g) {
         <button class="btn red wide" aria-expanded="${pickBelot}" onclick="pickBelot=!pickBelot;render()">BELOT</button></div>
       ${pickBelot ? `<div class="row" style="margin-top:10px"><span class="muted small" style="flex:0 0 auto">Belot za:</span>
         ${[0, 1].map(i => `<button class="btn red" onclick="belot(${i})">${MV(i)}</button>`).join('')}</div>` : ''}`}
-    <div class="row" style="margin-top:14px">
-      <button class="link" style="text-align:left" onclick="undoHand()" ${g.hands.length ? '' : 'disabled'}>↶ poništi zadnju ruku</button>
-      <button class="link bad" style="text-align:right" onclick="abandonGame()">prekini igru</button></div>`;
+    <p class="center" style="margin:14px 0 0"><button class="link bad" onclick="abandonGame()">prekini igru</button></p>`;
 }
 
 function newHand() {
@@ -322,7 +330,8 @@ function handForm(g) {
     <div class="cols">${col(0)}${col(1)}</div>
     <div class="preview" id="preview">${previewText()}</div>
     <div class="row"><button class="btn" onclick="draft=null;render()">Odustani</button>
-      <button class="btn main" onclick="saveHand()">Spremi</button></div></div>`;
+      <button class="btn main" onclick="saveHand()">Spremi</button></div>
+    ${d.idx != null ? `<p class="center" style="margin:12px 0 0"><button class="link bad" onclick="delHand()">obriši ovu ruku</button></p>` : ''}</div>`;
 }
 function cardIn(i, el) {
   const n = +el.value;
@@ -354,21 +363,32 @@ function saveHand() {
   const h = buildHand(), g = db.games.find(x => x.id === draft.gid), was = winner(g);
   if (typeof h === 'string') return alert(h);
   const hands = g.hands.slice(); hands[draft.idx ?? hands.length] = h;
+  setHands(g, hands, was);
+}
+function delHand() {
+  const g = db.games.find(x => x.id === draft.gid);
+  setHands(g, g.hands.filter((_, k) => k !== draft.idx), winner(g));
+}
+function setHands(g, hands, was) {
   // a fix that reopens a finished game would leave two games in progress
   if (was != null && winner({ ...g, hands }) == null && active()) return alert('Ova ispravka bi ponovno otvorila igru, a druga je igra u tijeku. Prvo završi ili prekini tu igru.');
   g.hands = hands; draft = null; save();
   const w = winner(g);
-  if (w != null && w !== was && view === 'game') flash = `Pobjeda: ${MV(w)} — ${esc(teamName(g.teams[w]))}!`;
+  if (w != null && w !== was && view === 'game') { shownId = g.id; confetti(); }
   render();
+}
+function confetti() {
+  const C = ['#d42f2a', '#3c9a3a', '#f3c51c', '#8a3b1e'], box = document.createElement('div');
+  box.className = 'confetti'; box.setAttribute('aria-hidden', 'true');
+  box.innerHTML = Array.from({ length: 36 }, (_, i) => `<i style="left:${Math.random() * 100}%;background:${C[i % 4]};animation-duration:${1.8 + Math.random()}s;animation-delay:${Math.random() * .5}s;--x:${Math.round((Math.random() - .5) * 120)}px;--r:${Math.round(Math.random() * 720 - 360)}deg"></i>`).join('');
+  document.body.append(box); setTimeout(() => box.remove(), 3500);
 }
 function belot(i) {
   const g = active();
   if (!confirm(`BELOT za ${MV(i)} (${teamName(g.teams[i])})? Igra odmah završava pobjedom.`)) return;
-  g.belot = i; draft = null; pickBelot = false; save();
-  flash = `BELOT! Pobjeda: ${MV(i)} — ${esc(teamName(g.teams[i]))}!`;
-  render();
+  g.belot = i; draft = null; pickBelot = false; shownId = g.id; save();
+  render(); confetti();
 }
-function undoHand() { if (confirm('Poništiti zadnju ruku?')) { active().hands.pop(); draft = null; save(); render(); } }
 function abandonGame() {
   const g = active();
   if (!confirm('Prekinuti i obrisati ovu igru?')) return;
