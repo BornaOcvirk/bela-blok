@@ -171,10 +171,10 @@ nav button.on i{transform:translateY(-3px)}
 .confetti i{position:absolute;top:-16px;width:8px;height:12px;border-radius:2px;animation:fall linear forwards}
 @keyframes fall{to{transform:translate(var(--x),110vh) rotate(var(--r))}}
 @keyframes ring{25%{transform:rotate(20deg)}75%{transform:rotate(-20deg)}}
-/* loader: only appears if loading takes a moment. The left card falls onto the table, the rest slide over,
+/* loader: shown on every start for at least a moment. The left card falls onto the table, the rest slide over,
    and it comes back from above into the right-hand spot. Each card runs the same loop a quarter later. */
-#loader{position:fixed;inset:0;z-index:30;display:grid;place-items:center;background:var(--paper);opacity:0;animation:show .3s .4s forwards}
-@keyframes show{to{opacity:1}}
+#loader{position:fixed;inset:0;z-index:30;display:grid;place-items:center;background:var(--paper);transition:opacity .3s}
+#loader.out{opacity:0;pointer-events:none}
 .deal i{animation:deal 3.2s infinite}
 .deal i:nth-child(2){animation-delay:-2.4s}.deal i:nth-child(3){animation-delay:-1.6s}.deal i:nth-child(4){animation-delay:-.8s}
 @keyframes deal{
@@ -933,8 +933,8 @@ function historyView() {
   }).join('');
   const n = db.games.length;
   const list = histTab === 'tours'
-    ? tourList(db.tournaments.slice()) || fan('big') + '<p class="muted center">Još nema turnira.</p>'
-    : games || fan('big') + '<p class="muted center">Još nema igara.</p>';
+    ? tourList(db.tournaments.slice()) || fan('big deal') + '<p class="muted center">Još nema turnira.</p>'
+    : games || fan('big deal') + '<p class="muted center">Još nema igara.</p>';
   return `<div class="hhead"><h2>Povijest</h2>${n && histTab === 'games' ? `<button class="chip" onclick="toggleAllDays()" aria-label="Ukupno ${n} ${plural(n, 'igra', 'igre', 'igara')}, otvori ili zatvori sve dane">Σ ${n} ${plural(n, 'igra', 'igre', 'igara')}</button>` : ''}</div>
     ${tabs}${list}
     <h2>Sigurnosna kopija</h2>
@@ -979,7 +979,8 @@ function importText(txt) {
 $('#hfan').innerHTML = fan();
 document.querySelectorAll('nav i[data-s]').forEach(e => e.innerHTML = SUIT[e.dataset.s]);
 applyTheme(); render();
-$('#loader').remove();
+// keep the dealing animation up a little while on start (long enough for one card to fall and come back), then fade out
+setTimeout(() => { $('#loader').classList.add('out'); setTimeout(() => $('#loader').remove(), 300); }, Math.max(0, 1300 - performance.now()));
 addEventListener('resize', placeInd);
 addEventListener('keydown', e => { if (e.key === 'Escape' && pickDealer) { pickDealer = false; render(); } }); document.fonts?.ready.then(placeInd);
 if ('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js').catch(() => {});
