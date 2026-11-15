@@ -100,7 +100,7 @@ input::placeholder{color:var(--soft);opacity:.6}
 #plist{justify-content:center}
 .zvs{display:flex;flex-direction:column;gap:8px;margin-top:10px}.zvr{display:flex;gap:6px}
 .zvb{flex:1;position:relative;border:2px solid var(--ink);background:transparent;border-radius:12px;padding:10px 6px;font-size:21px;font-weight:600;cursor:pointer}
-.zvb.on{border-color:var(--green);color:var(--green);background:var(--hl)}
+.zvb.on{border-color:var(--green);color:var(--green);background:var(--hl)}.zvb.red{border-color:var(--bad);color:var(--bad)}
 .zvb b{position:absolute;top:-9px;right:-5px;min-width:30px;padding:0 6px;border-radius:999px;background:var(--green);color:var(--on-green);font-size:15px;line-height:22px}
 .zvm{flex:0 0 44px;border:2px solid var(--bad);background:transparent;color:var(--bad);border-radius:12px;font-size:24px;cursor:pointer}
 .hhead{display:flex;align-items:center;justify-content:space-between;gap:10px}
@@ -270,7 +270,7 @@ function draw() {
 function newGameView() {
   picks = picks.map(id => db.players.some(p => p.id === id) ? id : null); // drop deleted players
   const slot = i => slotBtn(picks[i], `picks[${i}]=null`);
-  return `<h2>Nova igra</h2>${db.players.length ? '' : fan('big') + '<p class="muted center">Dodaj igrače pod <u>Igrači</u>, igraj s gostima ili bez igrača.</p>'}
+  return `<h2>Nova igra</h2>${db.players.length ? '' : fan('big') + '<p class="muted center">Dodirni <u>+ igrač</u> i upiši ime ili igraj bez igrača.</p>'}
     <span class="lbl">MI</span><div class="row">${slot(0)}${slot(1)}</div>
     <span class="lbl">VI</span><div class="row">${slot(2)}${slot(3)}</div>
     ${picks.includes(null) ? finder() : ''}
@@ -279,7 +279,16 @@ function newGameView() {
     <button class="btn main wide" style="width:100%;margin-top:20px" onclick="startGame()">Počni igru</button>
     <button class="btn wide" style="width:100%;margin-top:10px" onclick="startGame(true)">Igraj bez igrača</button>`;
 }
-const slotBtn = (id, clear) => `<button class="btn ${id ? 'on' : ''}" onclick="${clear};render()" ${id ? `aria-label="Makni ${esc(pname(id))}"` : 'disabled'}>${id ? esc(pname(id)) + ' ✕' : '— igrač —'}</button>`;
+const slotBtn = (id, clear) => id ? `<button class="btn on" onclick="${clear};render()" aria-label="Makni ${esc(pname(id))}">${esc(pname(id))} ✕</button>`
+  : `<button class="btn" onclick="newPlayer()">+ igrač</button>`;
+function newPlayer() { // empty slot: type a name, it becomes a saved player (or picks the existing one)
+  const name = prompt('Ime igrača:')?.trim().slice(0, 30);
+  if (!name) return;
+  const old = db.players.find(p => p.name.toLowerCase() === name.toLowerCase());
+  if (old && taken().includes(old.id)) return alert('Taj igrač je već odabran.');
+  if (!old) { db.players.push({ id: uid(), name }); save(); }
+  pickPlayer(old?.id ?? db.players.at(-1).id);
+}
 const finder = () => `<input id="q" type="search" placeholder="Traži igrača…" autocomplete="off" aria-label="Traži igrača"
       oninput="$('#plist').innerHTML=playerChips()" onkeydown="if(event.key==='Enter'){event.preventDefault();$('#plist button')?.click()}">
     <div id="plist" class="chips">${playerChips()}</div>`;
@@ -305,7 +314,7 @@ function addGuest() {
   pickPlayer(id);
 }
 function pickPlayer(id) {
-  const typed = !!$('#q').value;
+  const typed = !!$('#q')?.value;
   const s = slots(); s[s.indexOf(null)] = id; render();
   if (typed) $('#q')?.focus(); // keep the keyboard up while typing names
 }
@@ -389,9 +398,9 @@ function handForm(g) {
     <input id="c${i}" type="number" inputmode="numeric" min="0" max="162" placeholder="0" aria-label="Bodovi ${MV(i)}"
       value="${d.stiglja != null ? (d.stiglja === i ? 252 : 0) : d.cards[i]}" ${d.stiglja != null ? 'disabled' : ''} oninput="cardIn(${i},this)">
     <div class="zvs">${[20, 50, 100, 150, 200].map(v => { const n = d.zv[i].filter(x => x === v).length;
-      return `<div class="zvr"><button class="zvb ${n ? 'on' : ''}" onclick="addZv(${i},${v})" aria-label="Zvanje ${v}${n ? `, upisano ${n}×` : ''}">+${v}${n ? `<b>×${n}</b>` : ''}</button>${n ? `<button class="zvm" onclick="rmZv(${i},${v})" aria-label="Ukloni jedno zvanje ${v}">−</button>` : ''}</div>`; }).join('')}</div>
-    <div class="chips"><button class="chip ${d.stiglja === i ? 'on' : ''}" aria-pressed="${d.stiglja === i}" onclick="toggleStiglja(${i})">ŠTIGLJA</button>
-      ${d.idx == null ? `<button class="chip red" onclick="belot(${i})">BELOT</button>` : ''}</div>
+      return `<div class="zvr"><button class="zvb ${n ? 'on' : ''}" onclick="addZv(${i},${v})" aria-label="Zvanje ${v}${n ? `, upisano ${n}×` : ''}">+${v}${n ? `<b>×${n}</b>` : ''}</button>${n ? `<button class="zvm" onclick="rmZv(${i},${v})" aria-label="Ukloni jedno zvanje ${v}">−</button>` : ''}</div>`; }).join('')}
+      <div class="zvr"><button class="zvb ${d.stiglja === i ? 'on' : ''}" aria-pressed="${d.stiglja === i}" onclick="toggleStiglja(${i})">ŠTIGLJA</button></div>
+      ${d.idx == null ? `<div class="zvr"><button class="zvb red" onclick="belot(${i})">BELOT</button></div>` : ''}</div>
   </div>`;
   const pip = SUIT[SUITS[(d.idx ?? g.hands.length) % 4]]; // each hand gets the next suit
   return `<div class="entry"><span class="pip tr">${pip}</span><span class="pip bl">${pip}</span>
