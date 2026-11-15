@@ -159,10 +159,10 @@ const active = () => db.games.find(g => winner(g) == null);
 const zvOf = (h, i) => sum(h.zv[i]) + h.bela[i] * 20;
 // Croatian/German-suited cards. Fixed colours on purpose: they're printed card faces, not theme ink.
 const SUIT = {
-  srce: '<svg class="s" viewBox="0 0 24 24" aria-hidden="true"><path fill="#d42f2a" stroke="#6b1410" stroke-width="1.2" stroke-linejoin="round" d="M12 21.2C5.6 16.9 2.2 13.2 2.2 8.9A4.9 4.9 0 0 1 12 6.9a4.9 4.9 0 0 1 9.8 2c0 4.3-3.4 8-9.8 12.3z"/></svg>',
-  zir: '<svg class="s" viewBox="0 0 24 24" aria-hidden="true"><path fill="#5a3416" stroke="#3d220c" stroke-width="1" d="M11.2 1.6h1.6v3.2h-1.6z"/><path fill="#e0a13a" stroke="#3d220c" stroke-width="1.2" stroke-linejoin="round" d="M6 11.6h12c0 5.2-2.6 9-6 10.8-3.4-1.8-6-5.6-6-10.8z"/><path fill="#7a4a22" stroke="#3d220c" stroke-width="1.2" stroke-linejoin="round" d="M4 10.2C4 6.6 7.6 4.3 12 4.3s8 2.3 8 5.9c0 1-.7 1.6-1.7 1.6H5.7c-1 0-1.7-.6-1.7-1.6z"/></svg>',
-  list: '<svg class="s" viewBox="0 0 24 24" aria-hidden="true"><path fill="none" stroke="#17461a" stroke-width="1.8" stroke-linecap="round" d="M12 15.5v6.8"/><path fill="#3c9a3a" stroke="#17461a" stroke-width="1.2" stroke-linejoin="round" d="M12 2c4 4 9 7.5 9 12a4.6 4.6 0 0 1-9 1.8A4.6 4.6 0 0 1 3 14c0-4.5 5-8 9-12z"/><path fill="none" stroke="#a8dc8f" stroke-width="1.1" stroke-linecap="round" d="M12 5v10"/></svg>',
-  zvono: '<svg class="s" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="3.4" r="1.7" fill="none" stroke="#5e3b06" stroke-width="1.4"/><circle cx="12" cy="13.3" r="8.6" fill="#f0b52a" stroke="#5e3b06" stroke-width="1.2"/><path fill="#c8452a" stroke="#5e3b06" stroke-width="1" stroke-linejoin="round" d="M3.84 10.6Q12 13.4 20.16 10.6L20.6 13Q12 15.9 3.4 13z"/><circle cx="12" cy="17.6" r="1.5" fill="#3a2403"/><path stroke="#3a2403" stroke-width="1.6" stroke-linecap="round" d="M12 18.6v3.2"/></svg>',
+srce: '<svg class="s" viewBox="0 0 24 24" aria-hidden="true"><path fill="#e0332a" stroke="#5a120e" stroke-width="1.1" stroke-linejoin="round" d="M12 21.2C5.6 16.9 2.2 13.2 2.2 8.9A4.9 4.9 0 0 1 12 6.9a4.9 4.9 0 0 1 9.8 2c0 4.3-3.4 8-9.8 12.3z"/><path fill="#a81f1a" d="M5 15.6c2 2 4.3 3.7 7 5.6 2.7-1.9 5-3.6 7-5.6z"/></svg>',
+  zir: '<svg class="s" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="20.6" r="2.4" fill="#2e8b34" stroke="#173f12" stroke-width="1"/><path fill="#8a3b1e" stroke="#3a1a08" stroke-width="1.1" stroke-linejoin="round" d="M6.3 11.2h11.4v4.2c0 2.6-2.5 4.3-5.7 4.3s-5.7-1.7-5.7-4.3z"/><path fill="#d8402a" d="M6.85 11.8h10.3v2.2H6.85z"/><path fill="#f3c51c" stroke="#3a1a08" stroke-width="1.1" stroke-linejoin="round" d="M6.8 11.2V8.4a5.2 5.2 0 0 1 10.4 0v2.8z"/><path fill="none" stroke="#fff6b8" stroke-width="1.2" stroke-linecap="round" d="M9 9.6V8.4a3 3 0 0 1 1.4-2.5"/></svg>',
+  list: '<svg class="s" viewBox="0 0 24 24" aria-hidden="true"><path fill="none" stroke="#8a5a1c" stroke-width="1.6" stroke-linecap="round" d="M12 18c0 2.4-.6 3.8-2.2 4.8"/><path fill="#3c9a3a" d="M12 18.5C6.5 15 3 11.6 3 7.6a4.6 4.6 0 0 1 9-2.4 4.6 4.6 0 0 1 9 2.4c0 4-3.5 7.4-9 10.9z"/><path fill="#ecc935" d="M12 18.5C6.5 15 3 11.6 3 7.6a4.6 4.6 0 0 1 9-2.4z"/><path fill="none" stroke="#1d3d14" stroke-width="1.1" stroke-linejoin="round" d="M12 18.5C6.5 15 3 11.6 3 7.6a4.6 4.6 0 0 1 9-2.4 4.6 4.6 0 0 1 9 2.4c0 4-3.5 7.4-9 10.9z"/><path fill="none" stroke="#1d3d14" stroke-width=".8" stroke-linecap="round" d="M12 5.6v12.6M12 9.5l-3.8-1.6M12 12.5l-4.6-1.8M12 9.5l3.8-1.6M12 12.5l4.6-1.8"/></svg>',
+  zvono: '<svg class="s" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12.5" r="9" fill="#f3c51c"/><path fill="#d8402a" d="M3.2 14.2Q12 10.4 20.4 9.3L21 12.3Q12.6 13.6 4.2 16.9z"/><path fill="none" stroke="#2e8b34" stroke-width="1.8" stroke-linecap="round" d="M10 19.2c1.1-1.4 2.2 1 3.3-.4s2.2 1 3.3-.4"/><path stroke="#3a2a05" stroke-width="2.4" stroke-linecap="round" d="M8.6 6.2l1.8 1.8"/><circle cx="12" cy="12.5" r="9" fill="none" stroke="#3a2a05" stroke-width="1.1"/></svg>',
 };
 const SUITS = Object.keys(SUIT);
 const gameNo = g => db.games.filter(x => x.date <= g.date).length; // 1 = first game ever played
@@ -190,7 +190,7 @@ function newGameView() {
   return `<h2>Nova igra</h2>${db.players.length ? '' : fan('big') + '<p class="muted center">Dodaj igrače pod <u>Igrači</u> ili igraj s gostima.</p>'}
     <span class="lbl">MI</span><div class="row">${slot(0)}${slot(1)}</div>
     <span class="lbl">VI</span><div class="row">${slot(2)}${slot(3)}</div>
-    <p class="note" style="text-align:left">Za stolom redom (suprotno od kazaljke): MI 1, VI 1, MI 2, VI 2. Prvi miješa MI 1.</p>
+    <p class="note" style="text-align:left">MI 1 si ti · VI 1 desni protivnik · MI 2 partner · VI 2 lijevi protivnik. Prvi miješaš ti, dalje suprotno od kazaljke.</p>
     ${picks.includes(null) ? `<input id="q" type="search" placeholder="Traži igrača…" autocomplete="off" aria-label="Traži igrača"
       oninput="$('#plist').innerHTML=playerChips()" onkeydown="if(event.key==='Enter'){event.preventDefault();$('#plist button')?.click()}">
     <div id="plist" class="chips">${playerChips()}</div>` : ''}
@@ -245,12 +245,12 @@ function sheet(g) {
       : lead < 0 ? 'Izjednačeno' : `${MV(lead)} vodi za ${Math.abs(t[0] - t[1])}`}</p>` : ''}
     <p class="note">do ${g.target} · * zvao adut · Š štiglja · +zvanja</p>`;
 }
-const seats = g => [g.teams[0][0], g.teams[1][0], g.teams[0][1], g.teams[1][1]];
-const dealer = (g, k = 0) => seats(g)[((g.dealer ?? 0) + g.hands.length + k) % 4];
+const SEAT = ['ja', 'desni protivnik', 'partner', 'lijevi protivnik'];
+const dealer = (g, k = 0) => ((g.dealer ?? 0) + g.hands.length + k) % 4; // index into SEAT
 function nextDealer() { const g = active(); g.dealer = ((g.dealer ?? 0) + 1) % 4; save(); render(); }
 function gameView(g) {
   return `${sheet(g)}
-    <div class="dealer"><i>${SUIT[SUITS[g.hands.length % 4]]}</i><span>Miješa: <b>${esc(pname(dealer(g)))}</b> <span class="muted small">· zatim ${esc(pname(dealer(g, 1)))}</span></span>
+    <div class="dealer"><i>${SUIT[SUITS[g.hands.length % 4]]}</i><span>${dealer(g) ? 'Miješa' : 'Miješam'} <b>${SEAT[dealer(g)]}</b> <span class="muted small">· zatim ${SEAT[dealer(g, 1)]}</span></span>
       <button class="link small" onclick="nextDealer()" aria-label="Promijeni tko miješa">promijeni</button></div>
     ${draft ? handForm(g) : `
       <div class="row" style="margin-top:16px">
