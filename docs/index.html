@@ -111,7 +111,7 @@ try { db = JSON.parse(localStorage.getItem(KEY)); } catch {}
 db = db || { players: [], games: [], theme: 'auto' };
 const save = () => { try { localStorage.setItem(KEY, JSON.stringify(db)); } catch { alert('Spremanje nije uspjelo!'); } };
 
-let view = 'game', draft = null, flash = '', pickBelot = false, histId = null, cd = null;
+let view = 'game', draft = null, flash = '', pickBelot = false, histId = null, cd = null, picks = [null, null, null, null], target = 1001;
 const $ = s => document.querySelector(s);
 const esc = s => String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 const uid = () => Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
@@ -142,21 +142,35 @@ function newGameView() {
   if (db.players.length < 4) return `<h2>Nova igra</h2>
     <p class="muted">Za igru trebaju 4 igrača. Upiši ih pod <u>Igrači</u>.</p>
     <button class="btn main wide" style="width:100%" onclick="go('players')">Dodaj igrače</button>`;
-  const opts = db.players.map(p => `<option value="${p.id}">${esc(p.name)}</option>`).join('');
-  const sel = i => `<select id="p${i}" aria-label="Igrač ${i + 1}"><option value="">— igrač —</option>${opts}</select>`;
+  picks = picks.map(id => db.players.some(p => p.id === id) ? id : null); // drop deleted players
+  const slot = i => `<button class="btn ${picks[i] ? 'on' : ''}" onclick="picks[${i}]=null;render()" ${picks[i] ? `aria-label="Makni ${esc(pname(picks[i]))}"` : 'disabled'}>${picks[i] ? esc(pname(picks[i])) + ' ✕' : '— igrač —'}</button>`;
   return `<h2>Nova igra</h2>
-    <span class="lbl">MI</span><div class="row">${sel(0)}${sel(1)}</div>
-    <span class="lbl">VI</span><div class="row">${sel(2)}${sel(3)}</div>
+    <span class="lbl">MI</span><div class="row">${slot(0)}${slot(1)}</div>
+    <span class="lbl">VI</span><div class="row">${slot(2)}${slot(3)}</div>
+    ${picks.includes(null) ? `<input id="q" type="search" placeholder="Traži igrača…" autocomplete="off" aria-label="Traži igrača"
+      oninput="$('#plist').innerHTML=playerChips()" onkeydown="if(event.key==='Enter'){event.preventDefault();$('#plist button')?.click()}">
+    <div id="plist" class="chips">${playerChips()}</div>` : ''}
     <span class="lbl">Igra se do</span><div class="row pick">${[501, 701, 1001].map(t =>
-      `<label><input type="radio" name="target" value="${t}" ${t === 1001 ? 'checked' : ''}><span>${t}</span></label>`).join('')}</div>
+      `<label><input type="radio" name="target" value="${t}" ${t === target ? 'checked' : ''} onchange="target=${t}"><span>${t}</span></label>`).join('')}</div>
     <button class="btn main wide" style="width:100%;margin-top:20px" onclick="startGame()">Počni igru</button>`;
 }
+const fold = s => s.toLowerCase().normalize('NFD').replace(/\p{M}/gu, '').replace(/đ/g, 'd'); // "ivic" finds "Ivić"
+function playerChips() {
+  const q = fold($('#q')?.value ?? '');
+  const list = db.players.filter(p => !picks.includes(p.id) && fold(p.name).includes(q))
+    .sort((a, b) => a.name.localeCompare(b.name, 'hr'));
+  return list.map(p => `<button class="chip" onclick="pickPlayer('${p.id}')">${esc(p.name)}</button>`).join('')
+    || '<span class="muted small">Nema igrača s tim imenom.</span>';
+}
+function pickPlayer(id) {
+  const typed = !!$('#q').value;
+  picks[picks.indexOf(null)] = id; render();
+  if (typed) $('#q')?.focus(); // keep the keyboard up while typing names
+}
 function startGame() {
-  const ids = [0, 1, 2, 3].map(i => $('#p' + i).value);
-  if (ids.some(x => !x) || new Set(ids).size < 4) return alert('Odaberi 4 različita igrača.');
-  db.games.push({ id: uid(), date: Date.now(), teams: [[ids[0], ids[1]], [ids[2], ids[3]]],
-    target: +$('[name=target]:checked').value, hands: [], belot: null });
-  save(); render();
+  if (picks.includes(null)) return alert('Odaberi 4 igrača.');
+  db.games.push({ id: uid(), date: Date.now(), teams: [picks.slice(0, 2), picks.slice(2)], target, hands: [], belot: null });
+  picks = [null, null, null, null]; save(); render();
 }
 
 function sheet(g) {
