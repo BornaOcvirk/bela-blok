@@ -177,14 +177,17 @@ nav button.on i{transform:translateY(-3px)}
 #loader.out{opacity:0;pointer-events:none}
 .deal i{animation:deal 3.2s infinite}
 .deal i:nth-child(2){animation-delay:-2.4s}.deal i:nth-child(3){animation-delay:-1.6s}.deal i:nth-child(4){animation-delay:-.8s}
+/* The card turns about the fan's pivot; the falling tilt is about its own bottom edge, which sits 126% of the
+   card height above that pivot (translate there, rotateX, translate back), so the bottom stays put as it lies down. */
 @keyframes deal{
-  0%{transform:rotate(-27deg);opacity:1;z-index:1}
-  10%{transform:rotate(-44deg) translateY(90px) scale(.85);opacity:0;z-index:1}
-  10.1%{transform:rotate(27deg) translateY(-60px);opacity:0;z-index:4}
-  20%,35%{transform:rotate(27deg);opacity:1;z-index:4}
-  45%,60%{transform:rotate(9deg);opacity:1;z-index:3}
-  70%,85%{transform:rotate(-9deg);opacity:1;z-index:2}
-  95%,100%{transform:rotate(-27deg);opacity:1;z-index:1}}
+  0%{transform:rotate(-27deg) translateY(-126%) perspective(300px) rotateX(0deg) translateY(126%);opacity:1;z-index:1;animation-timing-function:ease-in}
+  10%{transform:rotate(-27deg) translateY(-126%) perspective(300px) rotateX(82deg) translateY(126%);opacity:1;z-index:1}
+  14%{transform:rotate(-27deg) translateY(-126%) perspective(300px) rotateX(82deg) translateY(126%);opacity:0;z-index:1}
+  14.1%{transform:rotate(27deg) translateY(calc(-126% - 60px)) perspective(300px) rotateX(0deg) translateY(126%);opacity:0;z-index:4}
+  22%,35%{transform:rotate(27deg) translateY(-126%) perspective(300px) rotateX(0deg) translateY(126%);opacity:1;z-index:4}
+  45%,60%{transform:rotate(9deg) translateY(-126%) perspective(300px) rotateX(0deg) translateY(126%);opacity:1;z-index:3}
+  70%,85%{transform:rotate(-9deg) translateY(-126%) perspective(300px) rotateX(0deg) translateY(126%);opacity:1;z-index:2}
+  95%,100%{transform:rotate(-27deg) translateY(-126%) perspective(300px) rotateX(0deg) translateY(126%);opacity:1;z-index:1}}
 @media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
 </style>
 </head>
