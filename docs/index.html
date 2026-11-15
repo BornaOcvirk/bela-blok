@@ -88,8 +88,7 @@ input::placeholder{color:var(--soft);opacity:.6}
 .grab{display:block;width:40px;height:5px;border-radius:3px;background:var(--rule);margin:0 auto}
 @keyframes up{from{transform:translateY(100%)}}@keyframes fade{from{opacity:0}}
 /* hand entry */
-.entry{position:relative;border:2px solid var(--ink);border-radius:16px;padding:4px 12px 30px;margin-top:16px;scroll-margin-top:calc(env(safe-area-inset-top) + 6px)}
-.pip{position:absolute;width:22px;height:22px}.pip.tr{top:10px;right:10px}.pip.bl{bottom:10px;left:10px;transform:rotate(180deg)}
+.entry{position:relative;border:2px solid var(--ink);border-radius:16px;padding:4px 12px 14px;margin-top:16px;scroll-margin-top:calc(env(safe-area-inset-top) + 6px)}
 .cols{display:grid;grid-template-columns:1fr 1fr;gap:14px}.cols>div{min-width:0}
 .colh{text-align:center;font-size:24px;margin-top:6px}
 .chips{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px}
@@ -172,10 +171,36 @@ nav button.on i{transform:translateY(-3px)}
 .confetti i{position:absolute;top:-16px;width:8px;height:12px;border-radius:2px;animation:fall linear forwards}
 @keyframes fall{to{transform:translate(var(--x),110vh) rotate(var(--r))}}
 @keyframes ring{25%{transform:rotate(20deg)}75%{transform:rotate(-20deg)}}
+/* loader: only appears if loading takes a moment. The left card falls onto the table, the rest slide over,
+   and it comes back from above into the right-hand spot. Each card runs the same loop a quarter later. */
+#loader{position:fixed;inset:0;z-index:30;display:grid;place-items:center;background:var(--paper);opacity:0;animation:show .3s .4s forwards}
+@keyframes show{to{opacity:1}}
+.deal i{animation:deal 3.2s infinite}
+.deal i:nth-child(2){animation-delay:-2.4s}.deal i:nth-child(3){animation-delay:-1.6s}.deal i:nth-child(4){animation-delay:-.8s}
+@keyframes deal{
+  0%{transform:rotate(-27deg);opacity:1;z-index:1}
+  10%{transform:rotate(-44deg) translateY(90px) scale(.85);opacity:0;z-index:1}
+  10.1%{transform:rotate(27deg) translateY(-60px);opacity:0;z-index:4}
+  20%,35%{transform:rotate(27deg);opacity:1;z-index:4}
+  45%,60%{transform:rotate(9deg);opacity:1;z-index:3}
+  70%,85%{transform:rotate(-9deg);opacity:1;z-index:2}
+  95%,100%{transform:rotate(-27deg);opacity:1;z-index:1}}
 @media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
 </style>
 </head>
 <body>
+<div id="loader" aria-hidden="true"><div class="fan big deal"></div></div>
+<script>
+// Croatian/German-suited cards. Fixed colours on purpose: they're printed card faces, not theme ink.
+const SUIT = {
+srce: '<svg class="s" viewBox="0 0 24 24" aria-hidden="true"><path fill="#e0332a" stroke="#5a120e" stroke-width="1.1" stroke-linejoin="round" d="M12 21.2C5.6 16.9 2.2 13.2 2.2 8.9A4.9 4.9 0 0 1 12 6.9a4.9 4.9 0 0 1 9.8 2c0 4.3-3.4 8-9.8 12.3z"/><path fill="#a81f1a" d="M5 15.6c2 2 4.3 3.7 7 5.6 2.7-1.9 5-3.6 7-5.6z"/></svg>',
+  zir: '<svg class="s" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="20.6" r="2.4" fill="#2e8b34" stroke="#173f12" stroke-width="1"/><path fill="#8a3b1e" stroke="#3a1a08" stroke-width="1.1" stroke-linejoin="round" d="M6.3 11.2h11.4v4.2c0 2.6-2.5 4.3-5.7 4.3s-5.7-1.7-5.7-4.3z"/><path fill="#d8402a" d="M6.85 11.8h10.3v2.2H6.85z"/><path fill="#f3c51c" stroke="#3a1a08" stroke-width="1.1" stroke-linejoin="round" d="M6.8 11.2V8.4a5.2 5.2 0 0 1 10.4 0v2.8z"/><path fill="none" stroke="#fff6b8" stroke-width="1.2" stroke-linecap="round" d="M9 9.6V8.4a3 3 0 0 1 1.4-2.5"/></svg>',
+  list: '<svg class="s" viewBox="0 0 24 24" aria-hidden="true"><path fill="none" stroke="#8a5a1c" stroke-width="1.6" stroke-linecap="round" d="M12 18.6c0 2 .6 3.4 2.2 4.4"/><path fill="#3c9a3a" d="M12 18.6C9 21 3.5 19 3.2 14 3 10.5 4 7 5 4.5c2 1.5 3.6 1.9 4.6 2.1Q10.5 4 12 1.8q1.5 2.2 2.4 4.8c1-.2 2.6-.6 4.6-2.1 1 2.5 2 6 1.8 9.5-.3 5-5.8 7-8.8 4.6z"/><path fill="#ecc935" d="M12 18.6C9 21 3.5 19 3.2 14 3 10.5 4 7 5 4.5c2 1.5 3.6 1.9 4.6 2.1Q10.5 4 12 1.8z"/><path fill="none" stroke="#1d3d14" stroke-width="1.1" stroke-linejoin="round" d="M12 18.6C9 21 3.5 19 3.2 14 3 10.5 4 7 5 4.5c2 1.5 3.6 1.9 4.6 2.1Q10.5 4 12 1.8q1.5 2.2 2.4 4.8c1-.2 2.6-.6 4.6-2.1 1 2.5 2 6 1.8 9.5-.3 5-5.8 7-8.8 4.6z"/><path fill="none" stroke="#1d3d14" stroke-width=".8" stroke-linecap="round" d="M12 4.5v14M12 9l-3.6-2M12 12.5l-5.2-2.4M12 16l-5.6-1.6M12 9l3.6-2M12 12.5l5.2-2.4M12 16l5.6-1.6"/></svg>',
+  zvono: '<svg class="s" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12.5" r="9" fill="#f3c51c"/><path fill="#d8402a" d="M3.2 14.2Q12 10.4 20.4 9.3L21 12.3Q12.6 13.6 4.2 16.9z"/><path fill="none" stroke="#2e8b34" stroke-width="1.8" stroke-linecap="round" d="M10 19.2c1.1-1.4 2.2 1 3.3-.4s2.2 1 3.3-.4"/><path stroke="#3a2a05" stroke-width="2.4" stroke-linecap="round" d="M8.6 6.2l1.8 1.8"/><circle cx="12" cy="12.5" r="9" fill="none" stroke="#3a2a05" stroke-width="1.1"/></svg>',
+};
+const SUITS = Object.keys(SUIT);
+document.querySelector('#loader .fan').innerHTML = SUITS.map(k => `<i>${SUIT[k]}</i>`).join('');
+</script>
 <header><div class="brand"><h1>Bela Blok</h1><span id="hfan"></span></div><button id="themeBtn" class="theme" onclick="cycleTheme()" aria-label="Promijeni temu (auto / dan / noć)">auto</button></header>
 <main id="app"></main>
 <div id="sheet"></div>
@@ -211,14 +236,6 @@ const teamName = tm => tm.map(pname).join(' & ');
 const MV = i => i ? 'VI' : 'MI';
 const active = () => db.games.find(g => winner(g) == null);
 const zvOf = (h, i) => sum(h.zv[i]) + h.bela[i] * 20;
-// Croatian/German-suited cards. Fixed colours on purpose: they're printed card faces, not theme ink.
-const SUIT = {
-srce: '<svg class="s" viewBox="0 0 24 24" aria-hidden="true"><path fill="#e0332a" stroke="#5a120e" stroke-width="1.1" stroke-linejoin="round" d="M12 21.2C5.6 16.9 2.2 13.2 2.2 8.9A4.9 4.9 0 0 1 12 6.9a4.9 4.9 0 0 1 9.8 2c0 4.3-3.4 8-9.8 12.3z"/><path fill="#a81f1a" d="M5 15.6c2 2 4.3 3.7 7 5.6 2.7-1.9 5-3.6 7-5.6z"/></svg>',
-  zir: '<svg class="s" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="20.6" r="2.4" fill="#2e8b34" stroke="#173f12" stroke-width="1"/><path fill="#8a3b1e" stroke="#3a1a08" stroke-width="1.1" stroke-linejoin="round" d="M6.3 11.2h11.4v4.2c0 2.6-2.5 4.3-5.7 4.3s-5.7-1.7-5.7-4.3z"/><path fill="#d8402a" d="M6.85 11.8h10.3v2.2H6.85z"/><path fill="#f3c51c" stroke="#3a1a08" stroke-width="1.1" stroke-linejoin="round" d="M6.8 11.2V8.4a5.2 5.2 0 0 1 10.4 0v2.8z"/><path fill="none" stroke="#fff6b8" stroke-width="1.2" stroke-linecap="round" d="M9 9.6V8.4a3 3 0 0 1 1.4-2.5"/></svg>',
-  list: '<svg class="s" viewBox="0 0 24 24" aria-hidden="true"><path fill="none" stroke="#8a5a1c" stroke-width="1.6" stroke-linecap="round" d="M12 18.6c0 2 .6 3.4 2.2 4.4"/><path fill="#3c9a3a" d="M12 18.6C9 21 3.5 19 3.2 14 3 10.5 4 7 5 4.5c2 1.5 3.6 1.9 4.6 2.1Q10.5 4 12 1.8q1.5 2.2 2.4 4.8c1-.2 2.6-.6 4.6-2.1 1 2.5 2 6 1.8 9.5-.3 5-5.8 7-8.8 4.6z"/><path fill="#ecc935" d="M12 18.6C9 21 3.5 19 3.2 14 3 10.5 4 7 5 4.5c2 1.5 3.6 1.9 4.6 2.1Q10.5 4 12 1.8z"/><path fill="none" stroke="#1d3d14" stroke-width="1.1" stroke-linejoin="round" d="M12 18.6C9 21 3.5 19 3.2 14 3 10.5 4 7 5 4.5c2 1.5 3.6 1.9 4.6 2.1Q10.5 4 12 1.8q1.5 2.2 2.4 4.8c1-.2 2.6-.6 4.6-2.1 1 2.5 2 6 1.8 9.5-.3 5-5.8 7-8.8 4.6z"/><path fill="none" stroke="#1d3d14" stroke-width=".8" stroke-linecap="round" d="M12 4.5v14M12 9l-3.6-2M12 12.5l-5.2-2.4M12 16l-5.6-1.6M12 9l3.6-2M12 12.5l5.2-2.4M12 16l5.6-1.6"/></svg>',
-  zvono: '<svg class="s" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12.5" r="9" fill="#f3c51c"/><path fill="#d8402a" d="M3.2 14.2Q12 10.4 20.4 9.3L21 12.3Q12.6 13.6 4.2 16.9z"/><path fill="none" stroke="#2e8b34" stroke-width="1.8" stroke-linecap="round" d="M10 19.2c1.1-1.4 2.2 1 3.3-.4s2.2 1 3.3-.4"/><path stroke="#3a2a05" stroke-width="2.4" stroke-linecap="round" d="M8.6 6.2l1.8 1.8"/><circle cx="12" cy="12.5" r="9" fill="none" stroke="#3a2a05" stroke-width="1.1"/></svg>',
-};
-const SUITS = Object.keys(SUIT);
 const MARK = {
   pad: '<svg class="s" viewBox="0 0 24 24"><title>pad</title><circle cx="12" cy="12" r="11.5" fill="#d42f2a"/><g transform="rotate(28 12 12)" fill="none" stroke="#fff" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="17.6" r="2.1" fill="#fff" stroke="none"/><path d="M12 15.1V9.6L9.2 5.4M12 9.6l2.8-4.2M12 13.4l-3.4-2.6M12 13.4l3.4-2.6"/></g><path fill="none" stroke="#fff" stroke-width="1.3" stroke-linecap="round" d="M4.6 8.6h2.6M4.2 11.4h2"/></svg>',
   stiglja: '<svg class="s" viewBox="0 0 24 24"><title>štiglja</title><circle cx="12" cy="12" r="11.5" fill="#d42f2a"/><path fill="#fff" d="M5.6 6.2Q12 3.4 18.4 6.2 19 13.4 16.2 17.2 12 21.2 7.8 17.2 5 13.4 5.6 6.2z"/><g fill="none" stroke="#d42f2a" stroke-width="1.5" stroke-linecap="round"><path d="M7.9 10.3q1.4-1.9 2.8 0M13.3 10.3q1.4-1.9 2.8 0"/><path stroke-width="1" d="M7.6 7.6q1.6-1 3 0M13.4 7.6q1.6-1 3 0"/></g><path fill="#d42f2a" d="M8.3 12.6Q12 14 15.7 12.6 15 17 12 17 9 17 8.3 12.6z"/></svg>', // laughing theatre mask
@@ -403,8 +420,7 @@ function handForm(g) {
       <div class="zvr"><button class="zvb ${d.stiglja === i ? 'on' : ''}" aria-pressed="${d.stiglja === i}" onclick="toggleStiglja(${i})">ŠTIGLJA</button></div>
       ${d.idx == null ? `<div class="zvr"><button class="zvb red" onclick="belot(${i})">BELOT</button></div>` : ''}</div>
   </div>`;
-  const pip = SUIT[SUITS[(d.idx ?? g.hands.length) % 4]]; // each hand gets the next suit
-  return `<div class="entry"><span class="pip tr">${pip}</span><span class="pip bl">${pip}</span>
+  return `<div class="entry">
     ${d.idx != null ? `<h2 style="margin:10px 0 0">Ispravak ${d.idx + 1}. ruke</h2>` : ''}
     <div class="row" role="group" aria-label="Tko je zvao adut?" style="margin-top:12px">${[0, 1].map(i => `<button class="btn ${d.caller === i ? 'on' : ''}" aria-pressed="${d.caller === i}" onclick="draft.caller=${i};render()">${MV(i)}</button>`).join('')}</div>
     <div class="cols">${col(0)}${col(1)}</div>
@@ -563,22 +579,29 @@ function stats(pid) {
   }
   return s;
 }
+let pq = ''; // Igrači: what's typed in the name field, also filters the list
 function playersView() {
+  return `<h2>Igrači</h2>
+    <form class="row" onsubmit="addPlayer(event)"><input id="pname" placeholder="Upiši ime ili traži…" maxlength="30" autocomplete="off" aria-label="Ime igrača ili traži"
+      value="${esc(pq)}" oninput="pq=this.value;$('#pl').innerHTML=playerRows()">
+    <button class="btn" style="flex:0 0 auto">Dodaj</button>
+</form>
+    <div id="pl">${playerRows()}</div>`;
+}
+function playerRows() {
+  const q = fold(pq.trim()), hit = p => fold(p.name).includes(q);
   const head = p => `<div class="top"><span class="name">${esc(p.name)}</span><span style="flex:0 0 auto">
       <button class="icon" onclick="renamePlayer('${p.id}')" aria-label="Preimenuj ${esc(p.name)}">✎</button>
       <button class="icon bad" onclick="delPlayer('${p.id}')" aria-label="Obriši ${esc(p.name)}">✕</button></span></div>`;
-  const guests = db.players.filter(p => p.guest).sort((a, b) => a.name.localeCompare(b.name, 'hr'))
+  const guests = db.players.filter(p => p.guest && hit(p)).sort((a, b) => a.name.localeCompare(b.name, 'hr'))
     .map(p => `<div class="line">${head(p)}<div class="st">statistika se ne prati</div></div>`).join('');
-  const list = db.players.filter(p => !p.guest).map(p => ({ p, s: stats(p.id) })).sort((a, b) => b.s.w - a.s.w).map(({ p, s }) => `
+  const list = db.players.filter(p => !p.guest && hit(p)).map(p => ({ p, s: stats(p.id) })).sort((a, b) => b.s.w - a.s.w).map(({ p, s }) => `
     <div class="line">${head(p)}
       <div class="st">${s.g} igara · ${s.w} pobjeda${s.g ? ` (${Math.round(s.w / s.g * 100)}%)` : ''} · ${s.pts} bodova</div>
       <div class="st">zvanja ${s.zv} · belot ${s.belot} · štiglje ${s.st} · padovi ${s.pad}</div></div>`).join('');
-  return `<h2>Igrači</h2>
-    <form class="row" onsubmit="addPlayer(event)"><input id="pname" placeholder="Upiši ime…" maxlength="30" autocomplete="off" aria-label="Ime igrača">
-    <button class="btn" style="flex:0 0 auto">Dodaj</button>
-</form>
-    ${list || (guests ? '' : fan('big') + '<p class="muted center">Još nema igrača.</p>')}
-    ${guests ? `<h2>Gosti</h2><p class="st" style="margin-top:-4px">Dodaju se na stranici Igra. Ne vodi im se statistika.</p>${guests}` : ''}`;
+  if (!db.players.length) return fan('big') + '<p class="muted center">Još nema igrača.</p>';
+  if (!list && !guests) return `<p class="muted">Nema igrača „${esc(pq.trim())}”. Dodirni <u>Dodaj</u>.</p>`;
+  return `${list}${guests ? `<h2>Gosti</h2><p class="st" style="margin-top:-4px">Dodaju se na stranici Igra. Ne vodi im se statistika.</p>${guests}` : ''}`;
 }
 const nameTaken = (n, except) => db.players.some(p => p.id !== except && p.name.toLowerCase() === n.toLowerCase());
 function addPlayer(e) {
@@ -586,7 +609,7 @@ function addPlayer(e) {
   const n = $('#pname').value.trim();
   if (!n) return;
   if (nameTaken(n)) return alert('Igrač s tim imenom već postoji.');
-  db.players.push({ id: uid(), name: n }); save(); render(); $('#pname').focus();
+  db.players.push({ id: uid(), name: n }); pq = ''; save(); render(); $('#pname').focus();
 }
 function renamePlayer(id) {
   const p = db.players.find(x => x.id === id), n = prompt('Novo ime:', p.name)?.trim();
@@ -956,6 +979,7 @@ function importText(txt) {
 $('#hfan').innerHTML = fan();
 document.querySelectorAll('nav i[data-s]').forEach(e => e.innerHTML = SUIT[e.dataset.s]);
 applyTheme(); render();
+$('#loader').remove();
 addEventListener('resize', placeInd);
 addEventListener('keydown', e => { if (e.key === 'Escape' && pickDealer) { pickDealer = false; render(); } }); document.fonts?.ready.then(placeInd);
 if ('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js').catch(() => {});
