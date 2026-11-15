@@ -30,15 +30,25 @@ assert.ok(!validBackup({ ...backup, games: [{ ...backup.games[0], tour: { id: 't
 assert.ok(!validBackup({ ...backup, tournaments: [{ id: 't1', name: 'T', date: 1, teams: [{ name: 'A', players: ["x');y(//"] }, 'B'], wins: {} }] }));
 assert.ok(!validBackup({ ...backup, tournaments: [{ id: "t');x(//", name: 'T', date: 1, teams: ['A', 'B'], wins: {} }] }));
 
-const { bracket, liveWins } = require('./docs/bela.js');
-const champ = (n, w) => bracket(n, w).at(-1)[0].w;
-assert.deepStrictEqual(bracket(3, {}).map(r => r.length), [2, 1]);
-assert.deepStrictEqual(bracket(3, {})[0], [{ a: 0, b: 2, w: null }, { a: 1, b: null, w: 1 }]); // team 1 gets a bye
-{ const [a, b] = [5, 6].map(n => bracket(n, {})[0]); assert.deepStrictEqual([a[0], a[2], a[3]], [b[0], b[2], b[3]]); assert.deepStrictEqual(b[1], { a: 1, b: 5, w: null }); } // a 6th team only fills a bye
-assert.deepStrictEqual(bracket(5, {}).map(r => r.length), [4, 2, 1]);
-assert.strictEqual(champ(2, { '0-0': 1 }), 1);
-assert.strictEqual(champ(3, { '0-0': 2, '1-0': 2 }), 2);
-assert.strictEqual(champ(3, { '0-0': 0, '1-0': 2 }), null); // fixed round 1: stale final result ignored
-assert.deepStrictEqual(liveWins(3, { '0-0': 0, '1-0': 2, '5-5': 1 }), { '0-0': 0 });
-assert.strictEqual(champ(3, { '1-0': 0 }), null);           // final not playable yet
+const { bracket, seedOrder, roundRobin, matchList, standings, champion, liveWins } = require('./docs/bela.js');
+const T = (n, wins = {}, o = {}) => ({ teams: Array.from({ length: n }, (_, i) => 'T' + i), wins, ...o });
+assert.deepStrictEqual(seedOrder(8), [0, 7, 3, 4, 1, 6, 2, 5]);                 // 1v8, 4v5, 2v7, 3v6
+assert.deepStrictEqual(bracket(5, {})[0].map(x => [x.a, x.b]), [[0, null], [3, 4], [1, null], [2, null]]); // top 3 get byes
+{ const [a, b] = [5, 6].map(n => bracket(n, {})[0]); assert.deepStrictEqual([a[0], a[1], a[2]], [b[0], b[1], b[2]]); } // 6th team only fills a bye
+assert.deepStrictEqual(bracket(3, {}, true)[0], [{ a: 0, b: 2, w: null }, { a: 1, b: null, w: 1 }]); // old layout kept for v1
+assert.strictEqual(champion(T(2, { '0-0': 1 })), 1);
+assert.strictEqual(champion(T(3, { '0-1': 2, '1-0': 2 })), 2);
+assert.strictEqual(champion(T(3, { '0-1': 1, '1-0': 2 })), null);              // fixed round 1: stale final result ignored
+assert.deepStrictEqual(liveWins(T(3, { '0-1': 1, '1-0': 2, '5-5': 1 })), { '0-1': 1 });
+// 3rd place: semi losers meet before the final
+{ const t = T(4, { '0-0': 0, '0-1': 2 }, { third: true }), ks = matchList(t).map(x => x.key);
+  assert.deepStrictEqual(ks, ['0-0', '0-1', '3', '1-0']);
+  assert.deepStrictEqual(matchList(t)[2], { key: '3', a: 3, b: 1, w: null }); }
+// league: every pair exactly once, table by wins then points difference
+{ const pairs = roundRobin(5).map(p => p.join(':')).sort();
+  assert.strictEqual(pairs.length, 10); assert.strictEqual(new Set(pairs).size, 10); }
+{ const t = T(3, { '0:1': 0, '0:2': 2, '1:2': 1 }, { mode: 'liga' });               // everyone 1 win
+  assert.strictEqual(champion(t, { 2: 50 }), 2);
+  assert.deepStrictEqual(standings(t).map(r => r.w), [1, 1, 1]);
+  assert.strictEqual(champion({ ...t, wins: { '0:1': 0 } }), null); }               // not all played yet
 console.log('ok');

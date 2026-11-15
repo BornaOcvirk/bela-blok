@@ -54,7 +54,7 @@ input::placeholder{color:var(--soft);opacity:.6}
 .sheet th{font-size:32px;line-height:1;padding-top:8px;border-bottom:2px solid var(--ink)}
 .sheet th small{display:block;font-size:14px;color:var(--soft);padding:4px 0 6px;overflow-wrap:anywhere}
 .sheet td{position:relative;font-size:24px;height:40px}
-.sheet .mark{display:inline-block;width:22px;height:22px;vertical-align:-4px;margin-left:5px}
+.sheet .mark{position:absolute;top:50%;width:22px;height:22px;margin-top:-11px}.sheet .mark.l{left:6px}.sheet .mark.r{right:6px}
 .sheet .n{position:relative}.sheet .ex{position:absolute;left:100%;top:0;white-space:nowrap} /* * and +zvanja hang off the number so it stays centred */
 .sheet tr.hand{cursor:pointer}.sheet tr.hand:active td,.sheet tr.editing td{background:var(--hl)}
 .sheet sup{font-size:12px;color:var(--soft);margin-left:2px}
@@ -114,6 +114,9 @@ input::placeholder{color:var(--soft);opacity:.6}
 .tm+.tm{border-top:1px solid var(--rule)}
 .tm.win{background:var(--hl);color:var(--green);font-weight:700}
 .tm.out{color:var(--soft);text-decoration:line-through}
+.tm.st{font-size:14px;text-align:center;cursor:default}
+.lgrid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.sheet.lg th{font-size:15px;padding-bottom:6px}.sheet.lg td{font-size:17px}.sheet.lg{table-layout:auto}.sheet.lg td.nm{text-align:left;font-size:16px;color:var(--ink)}
 .tm.play{color:var(--green);font-size:15px;text-align:center;text-decoration:underline}
 span.tm,.tm:disabled{cursor:default}
 /* lists */
@@ -187,12 +190,12 @@ try { db = JSON.parse(localStorage.getItem(KEY)); } catch {}
 db = db || { players: [], games: [], theme: 'auto' };
 db.tournaments ??= [];
 // tournaments made before teams had players stored plain names
-const fixTours = () => db.tournaments.forEach(t => { t.teams = t.teams.map(x => typeof x === 'string' ? { name: x, players: [] } : x); });
+const fixTours = () => db.tournaments.forEach(t => { t.v ??= 1; t.teams = t.teams.map(x => typeof x === 'string' ? { name: x, players: [] } : x); });
 fixTours();
 const save = () => { try { localStorage.setItem(KEY, JSON.stringify(db)); } catch { alert('Spremanje nije uspjelo!'); } };
 
-let pickDealer = false, lastPage = null, tid = null, histTab = 'games', tpicks = [null, null], tteam = '';
-const newDraft = () => ({ name: '', target: 1001, teams: [], shuffle: true });
+let pickDealer = false, pend = 0, lastPage = null, tid = null, histTab = 'games', tpicks = [null, null], tteam = '';
+const newDraft = () => ({ name: '', mode: 'kup', target: 1001, teams: [], shuffle: true, third: true, bo3: false });
 let tdraft = newDraft();
 let view = 'game', draft = null, shownId = null, pickBelot = false, histId = null, cd = null, picks = [null, null, null, null], target = 1001;
 const $ = s => document.querySelector(s);
@@ -247,7 +250,8 @@ function render() {
   const g = db.games.find(x => x.id === shownId) || active();
   $('#sheet').innerHTML = view === 'game' && pickDealer && g && winner(g) == null ? `<div class="backdrop" onclick="pickDealer=false;render()"></div>
     <div class="panel" role="dialog" aria-modal="true" aria-label="Tko miješa"><span class="grab"></span>
-      <h2>Miješa: ${SEAT[dealer(g)]}</h2>${seats(dealer(g))}</div>` : '';
+      <h2>Miješa: ${SEAT[pend]}</h2>${seats(pend)}
+      <div class="row" style="margin-top:14px"><button class="btn" onclick="pickDealer=false;render()">Odustani</button><button class="btn main" onclick="setDealer(pend)">Potvrdi</button></div></div>` : '';
   $('#app').innerHTML = view === 'players' ? playersView() : view === 'history' ? historyView() : view === 'tour' ? tourView() : g ? gameView(g) : newGameView();
   animatePage();
 }
@@ -304,9 +308,9 @@ function sheet(g, edit = true) { // Povijest shows it read-only
   const t = totals(g.hands), w = winner(g);
   const cell = (h, i) => {
     const pad = h.fell && h.caller === i, z = zvOf(h, i);
-    const mark = k => `<span class="mark">${MARK[k]}</span>`;
-    if (pad) return `<td class="bad"><span class="n">0<span class="ex">${mark('pad')}</span></span></td>`; // fallen team loses its zvanja too
-    return `<td><span class="n">${h.score[i]}<span class="ex">${h.caller === i ? '<sup>*</sup>' : ''}${z ? `<span class="zv">+${z}</span>` : ''}${h.stiglja === i ? mark('stiglja') : ''}</span></span></td>`;
+    const mark = k => `<span class="mark ${i ? 'r' : 'l'}">${MARK[k]}</span>`; // MI: left border, VI: right border
+    if (pad) return `<td class="bad">${mark('pad')}<span class="n">0</span></td>`; // fallen team loses its zvanja too
+    return `<td>${h.stiglja === i ? mark('stiglja') : ''}<span class="n">${h.score[i]}<span class="ex">${h.caller === i ? '<sup>*</sup>' : ''}${z ? `<span class="zv">+${z}</span>` : ''}</span></span></td>`;
   };
   const rows = g.hands.map((h, k) => !edit ? `<tr>${cell(h, 0)}${cell(h, 1)}</tr>` : `<tr class="hand ${draft?.gid === g.id && draft.idx === k ? 'editing' : ''}" role="button" tabindex="0" aria-label="Ispravi ruku ${k + 1}"
     onclick="editHand('${g.id}',${k})" onkeydown="if(event.key==='Enter')this.click()">${cell(h, 0)}${cell(h, 1)}</tr>`);
@@ -331,11 +335,11 @@ function rematch(gid) {
 }
 // Seat map for picking the dealer: me at the bottom, partner across, opponents left and right.
 const PERSON = on => `<svg viewBox="0 0 24 24" aria-hidden="true"><g fill="${on ? 'currentColor' : 'none'}" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"><circle cx="12" cy="7.5" r="4"/><path d="M4 21a8 7 0 0 1 16 0z"/></g></svg>`;
-const seats = d => `<div class="seats">${SEAT.map((t, i) => `<button class="seat p${i} ${d === i ? 'on' : ''}" aria-pressed="${d === i}" onclick="setDealer(${i})">${PERSON(d === i)}<span>${t}</span></button>`).join('')}
+const seats = d => `<div class="seats">${SEAT.map((t, i) => `<button class="seat p${i} ${d === i ? 'on' : ''}" aria-pressed="${d === i}" onclick="pickSeat(${i})">${PERSON(d === i)}<span>${t}</span></button>`).join('')}
   <div class="table" aria-hidden="true">${SUIT.zvono}</div></div>`;
+// Tapping a seat only selects it; the panel is updated in place so it doesn't slide in again.
+function pickSeat(i) { pend = i; $('#sheet .seats').outerHTML = seats(i); $('#sheet h2').textContent = 'Miješa: ' + SEAT[i]; }
 function setDealer(i) { const g = active(); g.dealer = ((i - g.hands.length) % 4 + 4) % 4; pickDealer = false; save(); render(); }
-const tourButtons = t => `${nextMatch(t) ? `<button class="btn main wide" style="width:100%;margin-top:16px" onclick="playNext('${t.id}')">Sljedeća utakmica turnira</button>` : ''}
-    <button class="btn wide" style="width:100%;margin-top:10px" onclick="shownId=null;draft=null;tid='${t.id}';go('tour')">Prikaži turnir</button>`;
 function gameView(g) {
   const w = winner(g);
   if (w != null) return `${tourLine(g)}<div class="flash" role="status">${SUIT.zvono}${g.belot != null ? 'BELOT! ' : ''}Pobjeda: ${MV(w)} — ${esc(teamName(g.teams[w]))}!</div>
@@ -345,7 +349,7 @@ function gameView(g) {
     <button class="btn wide" style="width:100%;margin-top:10px" onclick="shownId=null;draft=null;render()">Nova igra s drugim igračima</button>`}`;
   return `${tourLine(g)}${sheet(g)}
     <div class="dealer"><i>${SUIT[SUITS[g.hands.length % 4]]}</i><span>${dealer(g) ? 'Miješa' : 'Miješam'}</span>
-      <button class="chip on" aria-expanded="${pickDealer}" aria-label="Miješa ${SEAT[dealer(g)]}, promijeni" onclick="pickDealer=!pickDealer;render()">${SEAT[dealer(g)]} ▾</button>
+      <button class="chip on" aria-expanded="${pickDealer}" aria-label="Miješa ${SEAT[dealer(g)]}, promijeni" onclick="pickDealer=true;pend=${dealer(g)};render()">${SEAT[dealer(g)]} ▾</button>
       <span class="muted small">zatim ${SEAT[dealer(g, 1)]}</span></div>
     ${draft?.gid === g.id ? handForm(g) : `
       <div class="row" style="margin-top:16px">
@@ -578,32 +582,58 @@ function delPlayer(id) {
 
 /* ---------- Turnir ---------- */
 // A team is { name, players: [id, id] }; teams from before players were picked have players: [].
-const champion = t => bracket(t.teams.length, t.wins).at(-1)[0].w;
+// Match logic (kup bracket, liga, 3rd place) lives in bela.js; this part draws it and links matches to games.
 const ROUND = (r, n) => ['Finale', 'Polufinale', 'Četvrtfinale'][n - 1 - r] ?? `${r + 1}. kolo`;
 const curTour = () => db.tournaments.find(t => t.id === tid);
+const tourOf = g => g.tour && db.tournaments.find(x => x.id === g.tour.id);
+const isLiga = t => t.mode === 'liga';
 const members = tm => tm.players.length && tm.name !== teamName(tm.players) ? `<span class="st" style="display:block">${esc(teamName(tm.players))}</span>` : '';
-const nextMatch = t => {
-  const rs = bracket(t.teams.length, t.wins);
-  for (const [r, ms] of rs.entries()) for (const [m, x] of ms.entries()) if (x.a != null && x.b != null && x.w == null) return { r, m, ...x };
-  return null;
-};
+const tGames = t => db.games.filter(g => g.tour?.id === t.id && winner(g) != null);
+const finalKey = t => isLiga(t) ? null : (rounds(t).length - 1) + '-0';
+// Per team, from the tournament's finished games: wins, points, pad, štiglja, points difference.
+function tourStats(t) {
+  const s = t.teams.map(() => ({ g: 0, w: 0, pts: 0, d: 0, pad: 0, st: 0 }));
+  for (const g of tGames(t)) {
+    const tot = totals(g.hands), w = winner(g);
+    g.tour.teams.forEach((team, side) => {
+      const x = s[team];
+      if (!x) return; // team was removed
+      x.g++; if (w === side) x.w++; x.pts += tot[side]; x.d += tot[side] - tot[1 - side];
+      for (const h of g.hands) { if (h.stiglja === side) x.st++; if (h.fell && h.caller === side) x.pad++; }
+    });
+  }
+  return s;
+}
+const champ = t => champion(t, Object.fromEntries(tourStats(t).map((x, i) => [i, x.d])));
+// Final on 2 wins: game wins so far per team in the final.
+const finalScore = t => { const c = {}; for (const g of tGames(t)) if (g.tour.key === finalKey(t)) { const k = g.tour.teams[winner(g)]; c[k] = (c[k] ?? 0) + 1; } return c; };
+const nextMatch = t => matchList(t).find(x => x.a != null && x.b != null && x.w == null) ?? null;
+const matchName = (t, key) => key === '3' ? 'Za 3. mjesto' : isLiga(t) ? 'Liga' : ROUND(+key.split('-')[0], rounds(t).length);
+
 function tourView() {
   const open = curTour();
   if (open) return bracketView(open);
-  const list = tourList(db.tournaments.filter(t => champion(t) == null)), d = tdraft, n = d.teams.length;
+  const list = tourList(db.tournaments.filter(t => champ(t) == null)), d = tdraft, n = d.teams.length, kup = d.mode === 'kup';
+  const radio = (name, val, cur, set, label) => `<label><input type="radio" name="${name}" ${val === cur ? 'checked' : ''} onchange="${set};render()"><span>${label}</span></label>`;
+  const check = (on, set, label) => `<label><input type="checkbox" ${on ? 'checked' : ''} onchange="${set}=this.checked;render()"><span>${label}</span></label>`;
+  const seeded = kup && !d.shuffle;
   return `${list ? '<h2>U tijeku</h2>' + list : ''}
     <h2>Novi turnir</h2>
     <input placeholder="Naziv turnira" maxlength="40" autocomplete="off" aria-label="Naziv turnira" value="${esc(d.name)}" oninput="tdraft.name=this.value">
-    <span class="lbl">Igra se do</span><div class="row pick">${[501, 701, 1001].map(v =>
-      `<label><input type="radio" name="ttarget" ${v === d.target ? 'checked' : ''} onchange="tdraft.target=${v}"><span>${v}</span></label>`).join('')}</div>
+    <span class="lbl">Vrsta</span><div class="row pick">${radio('tmode', 'kup', d.mode, "tdraft.mode='kup'", 'Kup (ispadanje)')}${radio('tmode', 'liga', d.mode, "tdraft.mode='liga'", 'Liga (svatko sa svakim)')}</div>
+    <span class="lbl">Igra se do</span><div class="row pick">${[501, 701, 1001].map(v => radio('ttarget', v, d.target, `tdraft.target=${v}`, v)).join('')}</div>
+    ${kup ? `<span class="lbl">Parovi</span><div class="row pick">${radio('tseed', true, d.shuffle, 'tdraft.shuffle=true', 'Ždrijeb')}${radio('tseed', false, d.shuffle, 'tdraft.shuffle=false', 'Nositelji')}</div>
+      ${seeded ? '<p class="st">Prvi tim je najjači. 1. i 2. se mogu sresti tek u finalu, a najjači dobiju slobodan prolaz. Redoslijed mijenjaš sa ↑.</p>' : ''}
+      <div class="row pick" style="margin-top:10px">${check(d.third, 'tdraft.third', 'Utakmica za 3. mjesto')}${check(d.bo3, 'tdraft.bo3', 'Finale na 2 pobjede')}</div>` : ''}
     <h2>Timovi${n ? ` (${n})` : ''}</h2>
-    ${d.teams.map((tm, i) => `<div class="line"><div class="top"><span><span class="name">${esc(tm.name)}</span>${members(tm)}</span>
-      <button class="icon bad" onclick="tdraft.teams.splice(${i},1);render()" aria-label="Makni ${esc(tm.name)}">✕</button></div></div>`).join('')}
+    ${d.teams.map((tm, i) => `<div class="line"><div class="top"><span>${seeded ? `<span class="muted">${i + 1}.</span> ` : ''}<span class="name">${esc(tm.name)}</span>${members(tm)}</span><span style="flex:0 0 auto">
+      ${seeded && i ? `<button class="icon" onclick="moveTeam(${i})" aria-label="Pomakni ${esc(tm.name)} gore">↑</button>` : ''}
+      <button class="icon bad" onclick="tdraft.teams.splice(${i},1);render()" aria-label="Makni ${esc(tm.name)}">✕</button></span></div></div>`).join('')}
     ${teamForm()}
-    <div class="row pick" style="margin-top:20px"><label><input type="checkbox" ${d.shuffle ? 'checked' : ''} onchange="tdraft.shuffle=this.checked"><span>Ždrijeb (nasumični parovi)</span></label></div>
-    <button class="btn main wide" style="width:100%;margin-top:12px" onclick="newTour()" ${n < 2 ? 'disabled' : ''}>Napravi turnir i igraj</button>
+    <button class="btn main wide" style="width:100%;margin-top:20px" onclick="newTour()" ${n < 2 ? 'disabled' : ''}>Napravi turnir i igraj</button>
     <p class="st">${n < 2 ? 'Dodaj barem 2 tima. ' : ''}Gotovi turniri su pod Povijest → Povijest turnira.</p>`;
 }
+function moveTeam(i) { const t = tdraft.teams; t.splice(i - 1, 0, t.splice(i, 1)[0]); render(); }
 // Team builder: optional name + 2 players, picked like on the Igra page. Used for a new tournament and for adding a team later.
 function teamForm() {
   tpicks = tpicks.map(id => db.players.some(p => p.id === id) ? id : null);
@@ -622,59 +652,88 @@ function addTeam() {
   tpicks = [null, null]; tteam = ''; render();
 }
 const tourList = ts => ts.sort((a, b) => b.date - a.date).map(t => {
-  const c = champion(t), n = t.teams.length;
+  const c = champ(t), n = t.teams.length;
   return `<button class="line item" onclick="tid='${t.id}';render();scrollTo(0,0)"><span class="body"><span class="name">${esc(t.name)}</span>
-    <span class="st">${new Date(t.date).toLocaleDateString('hr-HR')} · ${n} ${plural(n, 'tim', 'tima', 'timova')} · ${c == null ? '<u>u tijeku</u>' : 'pobjednik: ' + esc(t.teams[c].name)}</span></span>
+    <span class="st">${new Date(t.date).toLocaleDateString('hr-HR')} · ${isLiga(t) ? 'liga' : 'kup'} · ${n} ${plural(n, 'tim', 'tima', 'timova')} · ${c == null ? '<u>u tijeku</u>' : 'pobjednik: ' + esc(t.teams[c].name)}</span></span>
     <span class="st">›</span></button>`;
 }).join('');
 function newTour() {
-  const d = tdraft, teams = d.teams.slice();
+  const d = tdraft, teams = d.teams.slice(), kup = d.mode === 'kup';
   if (teams.length < 2) return alert('Dodaj barem 2 tima.');
-  if (d.shuffle) for (let i = teams.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [teams[i], teams[j]] = [teams[j], teams[i]]; }
-  const t = { id: uid(), name: d.name.trim() || 'Turnir', date: Date.now(), target: d.target, teams, wins: {} };
+  if (kup && d.shuffle) for (let i = teams.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [teams[i], teams[j]] = [teams[j], teams[i]]; }
+  const t = { id: uid(), v: 2, name: d.name.trim() || 'Turnir', date: Date.now(), mode: d.mode, target: d.target, teams, wins: {}, third: kup && d.third, bo3: kup && d.bo3 };
   db.tournaments.push(t); tdraft = newDraft(); tid = t.id; save();
-  if (active()) { render(); return alert('Turnir je spreman, ali druga igra je u tijeku. Završi je pa pokreni utakmicu iz braketa.'); }
+  if (active()) { render(); return alert('Turnir je spreman, ali druga igra je u tijeku. Završi je pa pokreni utakmicu iz turnira.'); }
   playNext(t.id);
 }
-// Starts a bracket match as a normal game on the Igra page; its result flows back into the bracket (syncTour).
-function playMatch(id, r, m) {
-  const t = db.tournaments.find(x => x.id === id), x = bracket(t.teams.length, t.wins)[r][m], A = t.teams[x.a], B = t.teams[x.b];
-  if (A.players.length < 2 || B.players.length < 2) return alert('Ovi timovi nemaju odabrane igrače, pa se pobjednik označava dodirom u braketu.');
+// Starts a match as a normal game on the Igra page; its result flows back into the tournament (syncTour).
+function playMatch(id, key) {
+  const t = db.tournaments.find(x => x.id === id), x = matchList(t).find(m => m.key === key), A = t.teams[x.a], B = t.teams[x.b];
+  if (A.players.length < 2 || B.players.length < 2) return alert('Ovi timovi nemaju odabrane igrače, pa se pobjednik označava dodirom.');
   if (active()) return alert('Druga igra je u tijeku. Prvo je završi ili prekini.');
-  db.games.push({ id: uid(), date: Date.now(), teams: [[...A.players], [...B.players]], target: t.target ?? 1001, hands: [], belot: null, tour: { id, key: r + '-' + m, teams: [x.a, x.b] } });
+  db.games.push({ id: uid(), date: Date.now(), teams: [[...A.players], [...B.players]], target: t.target ?? 1001, hands: [], belot: null, tour: { id, key, teams: [x.a, x.b] } });
   shownId = null; draft = null; save(); go('game'); scrollTo(0, 0);
 }
-function playNext(id) { const n = nextMatch(db.tournaments.find(x => x.id === id)); if (n) playMatch(id, n.r, n.m); else render(); }
+function playNext(id) { const n = nextMatch(db.tournaments.find(x => x.id === id)); if (n) playMatch(id, n.key); else render(); }
 function syncTour(g) {
-  const t = g.tour && db.tournaments.find(x => x.id === g.tour.id);
+  const t = tourOf(g);
   if (!t) return;
-  const [r, m] = g.tour.key.split('-').map(Number), x = bracket(t.teams.length, t.wins)[r]?.[m], [a, b] = g.tour.teams;
-  if (!x || x.a !== a || x.b !== b) return; // the bracket changed under this game; leave it alone
+  const x = matchList(t).find(m => m.key === g.tour.key), [a, b] = g.tour.teams;
+  if (!x || !((x.a === a && x.b === b) || (x.a === b && x.b === a))) return; // the tournament changed under this game; leave it alone
+  if (t.bo3 && g.tour.key === finalKey(t)) { // final on 2 wins: decided once a team has won 2 final games
+    const won = Object.entries(finalScore(t)).find(([, n]) => n >= 2);
+    if (won) t.wins[g.tour.key] = +won[0]; else delete t.wins[g.tour.key];
+    return;
+  }
   const w = winner(g);
   if (w != null) t.wins[g.tour.key] = g.tour.teams[w]; else delete t.wins[g.tour.key];
 }
-const tourOf = g => g.tour && db.tournaments.find(x => x.id === g.tour.id);
 function tourLine(g) {
   const t = tourOf(g);
   if (!t) return '';
-  const n = bracket(t.teams.length, t.wins).length, r = +g.tour.key.split('-')[0], nm = i => esc(t.teams[g.tour.teams[i]]?.name ?? '?');
-  return `<p class="st center" style="margin:0 0 6px">${esc(t.name)} · ${ROUND(r, n)}: ${nm(0)} (MI) – ${nm(1)} (VI)</p>`;
+  const nm = i => esc(t.teams[g.tour.teams[i]]?.name ?? '?'), fs = t.bo3 && g.tour.key === finalKey(t) ? finalScore(t) : null;
+  return `<p class="st center" style="margin:0 0 6px">${esc(t.name)} · ${matchName(t, g.tour.key)}${fs ? ` (na 2 pobjede, ${fs[g.tour.teams[0]] ?? 0}:${fs[g.tour.teams[1]] ?? 0})` : ''}: ${nm(0)} (MI) – ${nm(1)} (VI)</p>`;
+}
+const tourButtons = t => `${nextMatch(t) ? `<button class="btn main wide" style="width:100%;margin-top:16px" onclick="playNext('${t.id}')">Sljedeća utakmica turnira</button>` : ''}
+    <button class="btn wide" style="width:100%;margin-top:10px" onclick="shownId=null;draft=null;tid='${t.id}';go('tour')">Prikaži turnir</button>`;
+
+// One match box: two team buttons (tap = winner), optional score line and a play link.
+function matchBox(t, x, bye) {
+  const side = team => team == null
+    ? `<span class="tm muted">${bye ? 'slobodan' : '…'}</span>`
+    : `<button class="tm ${x.w === team ? 'win' : x.w != null ? 'out' : ''}" onclick="setWin('${x.key}',${team})" ${x.a == null || x.b == null ? 'disabled' : ''}>${esc(t.teams[team].name)}${x.w === team ? ' ✓' : ''}</button>`;
+  const fs = t.bo3 && x.key === finalKey(t) && x.a != null && x.b != null ? finalScore(t) : null;
+  const play = x.a != null && x.b != null && x.w == null ? `<button class="tm play" onclick="playMatch('${t.id}','${x.key}')">▶ igraj</button>` : '';
+  return `<div class="match">${side(x.a)}${side(x.b)}${fs ? `<span class="tm st center">na 2 pobjede · ${fs[x.a] ?? 0}:${fs[x.b] ?? 0}</span>` : ''}${play}</div>`;
 }
 function bracketView(t) {
-  const rounds = bracket(t.teams.length, t.wins), c = champion(t), nm = nextMatch(t), a = active();
-  const side = (r, m, x, team) => team == null
-    ? `<span class="tm muted">${r === 0 ? 'slobodan' : '…'}</span>`
-    : `<button class="tm ${x.w === team ? 'win' : x.w != null ? 'out' : ''}" onclick="setWin(${r},${m},${team})" ${x.a == null || x.b == null ? 'disabled' : ''}>${esc(t.teams[team].name)}${x.w === team ? ' ✓' : ''}</button>`;
-  const play = (r, m, x) => x.a != null && x.b != null && x.w == null ? `<button class="tm play" onclick="playMatch('${t.id}',${r},${m})">▶ igraj</button>` : '';
-  const cols = rounds.map((ms, r) => `<div class="rnd"><div class="rh">${ROUND(r, rounds.length)}</div><div class="ms">
-    ${ms.map((x, m) => `<div class="match">${side(r, m, x, x.a)}${side(r, m, x, x.b)}${play(r, m, x)}</div>`).join('')}</div></div>`).join('');
-  const go_ = a?.tour?.id === t.id ? `<button class="btn main wide" style="width:100%" onclick="go('game')">Nastavi igru ›</button>`
-    : nm ? `<button class="btn main wide" style="width:100%" onclick="playMatch('${t.id}',${nm.r},${nm.m})">Igraj: ${esc(t.teams[nm.a].name)} – ${esc(t.teams[nm.b].name)}</button>` : '';
+  const c = champ(t), nm = nextMatch(t), a = active(), liga = isLiga(t), st = tourStats(t);
+  let body;
+  if (liga) {
+    const table = standings(t, Object.fromEntries(st.map((x, i) => [i, x.d])));
+    body = `<table class="sheet stat lg"><thead><tr><th></th><th scope="col">Tim</th><th scope="col">O</th><th scope="col">P</th><th scope="col">+/−</th></tr></thead>
+      <tbody>${table.map((r, k) => `<tr><td>${k + 1}.</td><td class="nm">${esc(t.teams[r.i].name)}</td><td>${r.p}</td><td>${r.w}</td><td>${r.d > 0 ? '+' : ''}${r.d}</td></tr>`).join('')}</tbody></table>
+      <p class="st">O = odigrano, P = pobjede, +/− = razlika bodova u odigranim igrama.</p>
+      <h2>Utakmice</h2><div class="lgrid">${matchList(t).map(x => matchBox(t, x)).join('')}</div>`;
+  } else {
+    const rs = rounds(t), th = thirdPlace(t);
+    body = `<div class="bracket">${rs.map((ms, r) => `<div class="rnd"><div class="rh">${ROUND(r, rs.length)}</div><div class="ms">
+      ${ms.map((x, m) => matchBox(t, { key: r + '-' + m, ...x }, r === 0)).join('')}
+      ${r === rs.length - 1 && th ? `<div class="rh" style="margin:14px 0 -4px">Za 3. mjesto</div>${matchBox(t, th)}` : ''}</div></div>`).join('')}</div>`;
+  }
+  const goBtn = a?.tour?.id === t.id ? `<button class="btn main wide" style="width:100%" onclick="go('game')">Nastavi igru ›</button>`
+    : nm ? `<button class="btn main wide" style="width:100%" onclick="playMatch('${t.id}','${nm.key}')">Igraj: ${esc(t.teams[nm.a].name)} – ${esc(t.teams[nm.b].name)}</button>` : '';
+  const best = st.map((x, i) => ({ ...x, i })).filter(x => x.g).sort((p, q) => q.w - p.w || q.pts - p.pts);
   return `<button class="link" onclick="tid=null;render()">‹ natrag</button>
     <div class="hhead"><h2 style="margin-top:6px">${esc(t.name)}</h2><button class="icon" onclick="renameTour()" aria-label="Preimenuj turnir">✎</button></div>
-    ${c != null ? `<div class="flash" role="status">${SUIT.zvono}Pobjednik: ${esc(t.teams[c].name)}!</div>` : go_}
-    <p class="st">Do ${t.target ?? 1001}. Pobjednik igre sam ulazi u braket. Ispravak: dodirni tim koji je pobijedio (ponovni dodir poništava).</p>
-    <div class="bracket">${cols}</div>
+    ${c != null ? `<div class="flash" role="status">${SUIT.zvono}Pobjednik: ${esc(t.teams[c].name)}!</div>` : goBtn}
+    <p class="st">${liga ? 'Liga' : 'Kup'} · do ${t.target ?? 1001}. Pobjednik igre sam ulazi u turnir. Ispravak: dodirni tim koji je pobijedio (ponovni dodir poništava).</p>
+    ${body}
+    <button class="btn" style="width:100%;margin-top:12px" onclick="shareTour()">Podijeli kao sliku</button>
+    ${best.length ? `<h2>Statistika</h2>
+      <table class="sheet stat lg"><thead><tr><th scope="col">Tim</th><th scope="col">Pob.</th><th scope="col">Bodovi</th><th scope="col">Pad</th><th scope="col">Štig.</th></tr></thead>
+      <tbody>${best.map(x => `<tr><td class="nm">${esc(t.teams[x.i].name)}</td><td>${x.w}/${x.g}</td><td>${x.pts}</td><td>${x.pad}</td><td>${x.st}</td></tr>`).join('')}</tbody></table>
+      ${t.teams[best[0].i].players.length ? `<p class="st">Najbolji par: <b>${esc(teamName(t.teams[best[0].i].players))}</b></p>` : ''}` : ''}
     <h2>Timovi</h2>
     ${t.teams.map((tm, i) => `<div class="line"><div class="top"><span><span class="name">${esc(tm.name)}</span>${members(tm)}</span><span style="flex:0 0 auto">
       <button class="icon" onclick="renameTeam(${i})" aria-label="Preimenuj ${esc(tm.name)}">✎</button>
@@ -682,11 +741,11 @@ function bracketView(t) {
     ${teamForm()}
     <button class="link bad" style="margin-top:14px" onclick="delTour()">obriši turnir</button>`;
 }
-function setWin(r, m, team) {
-  const t = curTour(), k = r + '-' + m, was = champion(t), x = $('.bracket').scrollLeft;
-  if (t.wins[k] === team) delete t.wins[k]; else t.wins[k] = team;
-  save(); render(); $('.bracket').scrollLeft = x; // keep the bracket where it was scrolled
-  const c = champion(t);
+function setWin(key, team) {
+  const t = curTour(), was = champ(t), x = $('.bracket')?.scrollLeft;
+  if (t.wins[key] === team) delete t.wins[key]; else t.wins[key] = team;
+  save(); render(); if ($('.bracket')) $('.bracket').scrollLeft = x; // keep the bracket where it was scrolled
+  const c = champ(t);
   if (c != null && c !== was) confetti();
 }
 function renameTeam(i) {
@@ -695,24 +754,36 @@ function renameTeam(i) {
   if (t.teams.some((x, j) => j !== i && x.name === n)) return alert('Tim s tim imenom već postoji.');
   t.teams[i].name = n; save(); render();
 }
-// Applies a change to the open tournament; asks first if it would throw away results that no longer fit the bracket.
+// Applies a change to the open tournament; asks first if it would throw away results that no longer fit.
 function changeTour(fn) {
   const t = curTour(), c = structuredClone(t);
-  fn(c); c.wins = liveWins(c.teams.length, c.wins);
-  const lost = Object.keys(liveWins(t.teams.length, t.wins)).length - Object.keys(c.wins).length;
-  if (lost > 0 && !confirm(`Ova promjena briše ${lost} ${plural(lost, 'rezultat', 'rezultata', 'rezultata')} koji više ne odgovaraju braketu. Nastaviti?`)) return false;
+  fn(c); c.wins = liveWins(c);
+  const lost = Object.keys(liveWins(t)).length - Object.keys(c.wins).length;
+  if (lost > 0 && !confirm(`Ova promjena briše ${lost} ${plural(lost, 'rezultat', 'rezultata', 'rezultata')} koji više ne odgovaraju turniru. Nastaviti?`)) return false;
   Object.assign(t, c); save(); render();
   return true;
 }
 function removeTeam(i) {
-  const t = curTour(), last = t.teams.length - 1;
+  const t = curTour(), last = t.teams.length - 1, re = x => x === i ? -1 : x === last ? i : x; // last team takes the free slot
+  const pair = (a, b) => Math.min(a, b) + ':' + Math.max(a, b);
   if (t.teams.length <= 2) return alert('Turnir mora imati barem 2 tima.');
   if (!confirm(`Maknuti ${t.teams[i].name} iz turnira?`)) return;
-  const ok = changeTour(c => { // last team takes the free slot, so nobody else moves
-    for (const k in c.wins) if (c.wins[k] === i) delete c.wins[k]; else if (c.wins[k] === last) c.wins[k] = i;
-    c.teams[i] = c.teams[last]; c.teams.pop();
+  const ok = changeTour(c => {
+    const w = {};
+    for (const [k, v] of Object.entries(c.wins)) {
+      if (re(v) < 0) continue;
+      if (!isLiga(c)) { w[k] = re(v); continue; }
+      const [a, b] = k.split(':').map(Number).map(re); // league keys name the two teams
+      if (a >= 0 && b >= 0) w[pair(a, b)] = re(v);
+    }
+    c.wins = w; c.teams[i] = c.teams[last]; c.teams.pop();
   });
-  if (ok) { for (const g of db.games) if (g.tour?.id === t.id) g.tour.teams = g.tour.teams.map(x => x === i ? -1 : x === last ? i : x); save(); }
+  if (!ok) return;
+  for (const g of db.games) if (g.tour?.id === t.id) {
+    g.tour.teams = g.tour.teams.map(re);
+    if (isLiga(t) && g.tour.teams.every(x => x >= 0)) g.tour.key = pair(...g.tour.teams);
+  }
+  save();
 }
 function renameTour() {
   const t = curTour(), n = prompt('Naziv turnira:', t.name)?.trim().slice(0, 40);
@@ -721,6 +792,70 @@ function renameTour() {
 function delTour() {
   if (!confirm('Obrisati ovaj turnir? Odigrane igre ostaju u povijesti.')) return;
   db.tournaments = db.tournaments.filter(t => t.id !== tid); tid = null; save(); render();
+}
+
+// Picture of the bracket / league table for sharing. iPhone share sheet when available, otherwise show it to long-press save.
+async function shareTour() {
+  const t = curTour(), cv = document.createElement('canvas'), x = cv.getContext('2d'), c = champ(t), P = 28, top = c != null ? 112 : 84;
+  await document.fonts?.ready;
+  const font = (w, s) => `${w} ${s}px 'Baloo 2', sans-serif`;
+  const fit = (s, w) => { while (s.length > 1 && x.measureText(s).width > w) s = s.slice(0, -2) + '…'; return s; };
+  const box = (bx, by, w, h) => { x.beginPath(); x.roundRect ? x.roundRect(bx, by, w, h, 10) : x.rect(bx, by, w, h); x.fillStyle = '#fffdf6'; x.fill(); x.lineWidth = 2; x.strokeStyle = '#1b1b18'; x.stroke(); };
+  const name = i => i == null ? '' : t.teams[i].name;
+  let W, H, draw;
+  if (isLiga(t)) {
+    const rows = standings(t, Object.fromEntries(tourStats(t).map((s, i) => [i, s.d])));
+    W = 560; H = top + 40 + rows.length * 38 + P;
+    draw = () => {
+      x.font = font(600, 16); x.fillStyle = '#6f6a5c';
+      const num = (v, px, y) => { x.textAlign = 'right'; x.fillText(v, px, y); x.textAlign = 'left'; }; // number columns right-aligned
+      x.fillText('Tim', P + 34, top + 20); [['O', 400], ['P', 460], ['+/−', W - P]].forEach(([s, px]) => num(s, px, top + 20));
+      rows.forEach((r, k) => {
+        const y = top + 56 + k * 38;
+        x.fillStyle = k === 0 && c != null ? '#1f5a3c' : '#1b1b18'; x.font = font(k === 0 && c != null ? 700 : 500, 20);
+        x.fillText(`${k + 1}.`, P, y); x.fillText(fit(name(r.i), 300), P + 34, y);
+        num(r.p, 400, y); num(r.w, 460, y); num((r.d > 0 ? '+' : '') + r.d, W - P, y);
+      });
+    };
+  } else {
+    const rs = rounds(t), th = thirdPlace(t), BW = 210, BH = 60, G = 36, slot = 76, n0 = rs[0].length;
+    W = P * 2 + rs.length * BW + (rs.length - 1) * G; H = top + 30 + n0 * slot + (th ? 110 : 0) + P;
+    const cy = (r, m) => top + 30 + (m + .5) * (n0 / rs[r].length) * slot;
+    const match = (bx, y, mt, bye) => {
+      box(bx, y - BH / 2, BW, BH);
+      [mt.a, mt.b].forEach((team, k) => {
+        const won = mt.w != null && mt.w === team, lost = mt.w != null && team != null && !won;
+        x.font = font(won ? 700 : 500, 17); x.fillStyle = won ? '#1f5a3c' : lost || team == null ? '#9c9a8e' : '#1b1b18';
+        x.fillText(fit(team == null ? (bye ? 'slobodan' : '…') : name(team) + (won ? ' ✓' : ''), BW - 20), bx + 10, y - BH / 2 + 22 + k * 27);
+      });
+    };
+    draw = () => {
+      rs.forEach((ms, r) => {
+        const bx = P + r * (BW + G);
+        x.font = font(600, 15); x.fillStyle = '#6f6a5c'; x.fillText(ROUND(r, rs.length), bx + 4, top + 12);
+        ms.forEach((mt, m) => {
+          const y = cy(r, m);
+          if (r < rs.length - 1) { // connector to the next round
+            const ny = cy(r + 1, m >> 1); x.strokeStyle = '#b9cde0'; x.lineWidth = 2; x.beginPath();
+            x.moveTo(bx + BW, y); x.lineTo(bx + BW + G / 2, y); x.lineTo(bx + BW + G / 2, ny); x.lineTo(bx + BW + G, ny); x.stroke();
+          }
+          match(bx, y, mt, r === 0);
+        });
+      });
+      if (th) { const bx = P + (rs.length - 1) * (BW + G), y = H - P - BH / 2 - 10; x.font = font(600, 15); x.fillStyle = '#6f6a5c'; x.fillText('Za 3. mjesto', bx + 4, y - BH / 2 - 8); match(bx, y, th); }
+    };
+  }
+  W = Math.max(W, 420);
+  cv.width = W * 2; cv.height = H * 2; x.scale(2, 2);
+  x.fillStyle = '#fbf8ef'; x.fillRect(0, 0, W, H);
+  x.fillStyle = '#1f5a3c'; x.font = font(700, 30); x.fillText(fit(t.name, W - P * 2), P, 48);
+  if (c != null) { x.font = font(600, 21); x.fillText(fit('Pobjednik: ' + name(c), W - P * 2), P, 82); }
+  draw();
+  const blob = await new Promise(r => cv.toBlob(r, 'image/png')), file = new File([blob], 'turnir.png', { type: 'image/png' });
+  if (navigator.canShare?.({ files: [file] })) { try { await navigator.share({ files: [file] }); } catch {} return; }
+  $('#sheet').innerHTML = `<div class="backdrop" onclick="render()"></div><div class="panel" role="dialog" aria-modal="true" aria-label="Slika turnira"><span class="grab"></span>
+    <p class="st center">Drži prst na slici pa odaberi Spremi ili Podijeli.</p><img src="${cv.toDataURL('image/png')}" alt="Turnir ${esc(t.name)}" style="display:block;width:100%;max-height:60vh;object-fit:contain">
+    <button class="btn" style="width:100%;margin-top:12px" onclick="render()">Zatvori</button></div>`;
 }
 
 /* ---------- Povijest ---------- */
