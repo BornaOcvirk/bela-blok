@@ -23,7 +23,7 @@
 *{box-sizing:border-box}
 html,body{background:var(--paper);touch-action:manipulation}
 body{margin:0;color:var(--ink);font:500 18px/1.35 'Baloo 2',ui-rounded,system-ui,sans-serif;padding-bottom:calc(64px + env(safe-area-inset-bottom));-webkit-tap-highlight-color:transparent}
-button,input,select{font:inherit;color:inherit}
+button,input,select,textarea{font:inherit;color:inherit}
 header{position:relative;display:flex;justify-content:center;max-width:640px;margin:0 auto;padding:calc(14px + env(safe-area-inset-top)) 16px 4px}
 h1{margin:0;font-size:30px;line-height:1.1;color:var(--green);border-bottom:4px double var(--green)}
 .theme{position:absolute;right:16px;top:calc(14px + env(safe-area-inset-top));background:none;border:0;font-size:17px;padding:4px 0 4px 8px;color:var(--soft);text-decoration:underline;cursor:pointer}
@@ -32,7 +32,7 @@ h2{margin:18px 0 8px;font-size:22px;color:var(--green)}
 .lbl{display:block;font-size:15px;color:var(--soft);margin:14px 0 4px}
 .muted{color:var(--soft)}.small{font-size:15px}.center{text-align:center}.bad{color:var(--bad)}
 .row{display:flex;gap:10px;align-items:center}.row>*{flex:1;min-width:0}
-input,select{width:100%;padding:8px 2px;border:0;border-bottom:2px solid var(--ink);border-radius:0;background:transparent;font-size:18px;-webkit-appearance:none;appearance:none}
+input,select,textarea{width:100%;padding:8px 2px;border:0;border-bottom:2px solid var(--ink);border-radius:0;background:transparent;font-size:18px;-webkit-appearance:none;appearance:none}
 input[type=number]{text-align:center;font-size:28px}
 input::-webkit-inner-spin-button{-webkit-appearance:none}
 input::placeholder{color:var(--soft);opacity:.6}
@@ -54,7 +54,8 @@ input::placeholder{color:var(--soft);opacity:.6}
 .sheet th{font-size:32px;line-height:1;padding-top:8px;border-bottom:2px solid var(--ink)}
 .sheet th small{display:block;font-size:14px;color:var(--soft);padding:4px 0 6px;overflow-wrap:anywhere}
 .sheet td{position:relative;font-size:24px;height:40px}
-.mark{position:absolute;top:50%;width:24px;height:24px;margin-top:-12px}.mark.l{left:6px}.mark.r{right:6px}
+.sheet .mark{display:inline-block;width:22px;height:22px;vertical-align:-4px;margin-left:5px}
+.sheet .n{position:relative}.sheet .ex{position:absolute;left:100%;top:0;white-space:nowrap} /* * and +zvanja hang off the number so it stays centred */
 .sheet tr.hand{cursor:pointer}.sheet tr.hand:active td,.sheet tr.editing td{background:var(--hl)}
 .sheet sup{font-size:12px;color:var(--soft);margin-left:2px}
 .sheet .zv{font-size:13px;color:var(--green);margin-left:4px}
@@ -72,6 +73,14 @@ input::placeholder{color:var(--soft);opacity:.6}
 .sheet.stat th{font-size:22px}
 .sheet.stat td{font-size:20px;height:36px}
 .sheet.stat td:first-child{text-align:left;font-size:16px;color:var(--soft)}
+/* dealer seat map */
+.seats{display:grid;grid-template-columns:repeat(3,1fr);grid-template-areas:". p2 ." "p3 t p1" ". p0 .";align-items:center;justify-items:center;max-width:340px;margin:6px auto 0}
+.p0{grid-area:p0}.p1{grid-area:p1}.p2{grid-area:p2}.p3{grid-area:p3}
+.seat{display:flex;flex-direction:column;align-items:center;gap:2px;background:none;border:0;padding:6px;color:var(--green);font-size:15px;cursor:pointer;transition:transform .08s}
+.seat span{color:var(--soft);white-space:nowrap}.seat.on span{color:var(--ink);font-weight:700}
+.seat svg{width:46px;height:46px}.seat:active{transform:scale(.94)}
+.table{grid-area:t;display:grid;place-items:center;width:76px;height:76px;border-radius:50%;background:var(--green);box-shadow:inset 0 0 0 5px rgba(0,0,0,.18)}
+.table svg.s{width:30px;height:30px}
 /* hand entry */
 .entry{position:relative;border:2px solid var(--ink);border-radius:16px;padding:4px 12px 38px;margin-top:16px}
 .pip{position:absolute;width:22px;height:22px}.pip.tr{top:10px;right:10px}.pip.bl{bottom:10px;left:10px;transform:rotate(180deg)}
@@ -89,6 +98,18 @@ input::placeholder{color:var(--soft);opacity:.6}
 .listed button{border:0;background:none;padding:2px 0;color:var(--green);font-size:16px;text-decoration:underline;cursor:pointer}
 .preview{text-align:center;font-size:26px;margin:14px 0 10px;font-variant-numeric:tabular-nums}
 .flash{border:4px double var(--green);border-radius:16px;color:var(--green);text-align:center;padding:14px;font-size:22px;margin:8px 0 12px}
+/* turnir */
+textarea{resize:vertical;line-height:1.4}
+.bracket{display:flex;gap:14px;overflow-x:auto;margin:0 -16px;padding:4px 16px 12px}
+.rnd{flex:0 0 150px;display:flex;flex-direction:column}
+.rh{text-align:center;font-size:15px;color:var(--soft);margin-bottom:6px}
+.ms{flex:1;display:flex;flex-direction:column;justify-content:space-around;gap:10px}
+.match{border:2px solid var(--ink);border-radius:10px;overflow:hidden}
+.tm{display:block;width:100%;text-align:left;background:none;border:0;padding:6px 8px;font-size:16px;overflow-wrap:anywhere;cursor:pointer}
+.tm+.tm{border-top:1px solid var(--rule)}
+.tm.win{background:var(--hl);color:var(--green);font-weight:700}
+.tm.out{color:var(--soft);text-decoration:line-through}
+span.tm,.tm:disabled{cursor:default}
 /* lists */
 .line{border-bottom:1px solid var(--rule);padding:10px 0}
 .line .top{display:flex;justify-content:space-between;align-items:baseline;gap:8px}
@@ -148,7 +169,8 @@ nav button.on i{transform:translateY(-3px)}
   <span class="ind" aria-hidden="true"></span>
   <button data-v="game" onclick="go('game')"><i data-s="srce"></i><span>Igra</span></button>
   <button data-v="players" onclick="go('players')"><i data-s="zir"></i><span>Igrači</span></button>
-  <button data-v="history" onclick="histId=null;go('history')"><i data-s="list"></i><span>Povijest</span></button>
+  <button data-v="history" onclick="histId=null;tid=null;go('history')"><i data-s="list"></i><span>Povijest</span></button>
+  <button data-v="tour" onclick="tid=null;go('tour')"><i data-s="zvono"></i><span>Turnir</span></button>
 </nav>
 <script src="bela.js"></script>
 <script>
@@ -156,9 +178,10 @@ const KEY = 'belablok';
 let db = null;
 try { db = JSON.parse(localStorage.getItem(KEY)); } catch {}
 db = db || { players: [], games: [], theme: 'auto' };
+db.tournaments ??= [];
 const save = () => { try { localStorage.setItem(KEY, JSON.stringify(db)); } catch { alert('Spremanje nije uspjelo!'); } };
 
-let pickDealer = false, lastPage = null;
+let pickDealer = false, lastPage = null, tid = null, histTab = 'games';
 let view = 'game', draft = null, shownId = null, pickBelot = false, histId = null, cd = null, picks = [null, null, null, null], target = 1001;
 const $ = s => document.querySelector(s);
 const esc = s => String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
@@ -179,7 +202,7 @@ srce: '<svg class="s" viewBox="0 0 24 24" aria-hidden="true"><path fill="#e0332a
 const SUITS = Object.keys(SUIT);
 const MARK = {
   pad: '<svg class="s" viewBox="0 0 24 24"><title>pad</title><circle cx="12" cy="12" r="11.5" fill="#d42f2a"/><g transform="rotate(28 12 12)" fill="none" stroke="#fff" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="17.6" r="2.1" fill="#fff" stroke="none"/><path d="M12 15.1V9.6L9.2 5.4M12 9.6l2.8-4.2M12 13.4l-3.4-2.6M12 13.4l3.4-2.6"/></g><path fill="none" stroke="#fff" stroke-width="1.3" stroke-linecap="round" d="M4.6 8.6h2.6M4.2 11.4h2"/></svg>',
-  stiglja: '<svg class="s" viewBox="0 0 24 24"><title>štiglja</title><circle cx="12" cy="12" r="11.5" fill="#d42f2a"/><path fill="#fff" d="M5.5 12.2 7 5.6l3 4.3L12 4l2 5.9 3-4.3 1.5 6.6z"/><g fill="#fff"><circle cx="7" cy="5.2" r="1.3"/><circle cx="12" cy="3.8" r="1.3"/><circle cx="17" cy="5.2" r="1.3"/></g><path fill="#fff" d="M6.6 13.2h10.8a5.4 5.4 0 0 1-10.8 0z"/><g fill="#d42f2a"><ellipse cx="9.7" cy="15" rx="1.3" ry=".9"/><ellipse cx="14.3" cy="15" rx="1.3" ry=".9"/></g></svg>',
+  stiglja: '<svg class="s" viewBox="0 0 24 24"><title>štiglja</title><circle cx="12" cy="12" r="11.5" fill="#d42f2a"/><path fill="#fff" d="M5.6 6.2Q12 3.4 18.4 6.2 19 13.4 16.2 17.2 12 21.2 7.8 17.2 5 13.4 5.6 6.2z"/><g fill="none" stroke="#d42f2a" stroke-width="1.5" stroke-linecap="round"><path d="M7.9 10.3q1.4-1.9 2.8 0M13.3 10.3q1.4-1.9 2.8 0"/><path stroke-width="1" d="M7.6 7.6q1.6-1 3 0M13.4 7.6q1.6-1 3 0"/></g><path fill="#d42f2a" d="M8.3 12.6Q12 14 15.7 12.6 15 17 12 17 9 17 8.3 12.6z"/></svg>', // laughing theatre mask
 };
 const gameNo = g => db.games.filter(x => x.date <= g.date).length; // 1 = first game ever played
 const fan = (cls = '') => `<div class="fan ${cls}" aria-hidden="true">${SUITS.map(k => `<i>${SUIT[k]}</i>`).join('')}</div>`;
@@ -191,16 +214,16 @@ function applyTheme() {
 function cycleTheme() { db.theme = { auto: 'light', light: 'dark', dark: 'auto' }[db.theme]; save(); applyTheme(); }
 
 function go(v) { view = v; render(); }
-const TABS = ['game', 'players', 'history'];
+const TABS = ['game', 'players', 'history', 'tour'];
 function placeInd() {
   const sp = $('nav button.on span'), ind = $('.ind');
   if (sp) { const r = sp.getBoundingClientRect(); ind.style.width = r.width + 'px'; ind.style.transform = `translateX(${r.left - ind.parentNode.getBoundingClientRect().left}px)`; }
 }
 function animatePage() {
-  const page = view + (view === 'history' && histId || ''), app = $('#app');
+  const sub = view === 'history' ? histId || tid : view === 'tour' ? tid : null, page = view + ':' + (sub || ''), app = $('#app');
   if (lastPage && page !== lastPage) {
-    const was = TABS.indexOf(lastPage.match(/^[a-z]+/)[0]), now = TABS.indexOf(view);
-    const fwd = now === was ? !!histId : now > was; // same tab: opening a game goes forward
+    const was = TABS.indexOf(lastPage.split(':')[0]), now = TABS.indexOf(view);
+    const fwd = now === was ? !!sub : now > was; // same tab: opening a game/tournament goes forward
     app.classList.remove('in-l', 'in-r'); void app.offsetWidth; // restart the animation
     app.classList.add(fwd ? 'in-r' : 'in-l');
   }
@@ -210,7 +233,7 @@ function render() {
   document.querySelectorAll('nav button').forEach(b => b.classList.toggle('on', b.dataset.v === view));
   placeInd();
   const g = db.games.find(x => x.id === shownId) || active();
-  $('#app').innerHTML = view === 'players' ? playersView() : view === 'history' ? historyView() : g ? gameView(g) : newGameView();
+  $('#app').innerHTML = view === 'players' ? playersView() : view === 'history' ? historyView() : view === 'tour' ? tourView() : g ? gameView(g) : newGameView();
   animatePage();
 }
 
@@ -257,15 +280,15 @@ function startGame() {
   picks = [null, null, null, null]; save(); render();
 }
 
-function sheet(g) {
+function sheet(g, edit = true) { // Povijest shows it read-only
   const t = totals(g.hands), w = winner(g);
   const cell = (h, i) => {
     const pad = h.fell && h.caller === i, z = zvOf(h, i);
-    const mark = k => `<span class="mark ${i ? 'r' : 'l'}">${MARK[k]}</span>`;
-    if (pad) return `<td class="bad">${mark('pad')}0</td>`; // fallen team loses its zvanja too
-    return `<td>${h.stiglja === i ? mark('stiglja') : ''}${h.score[i]}${h.caller === i ? '<sup>*</sup>' : ''}${z ? `<span class="zv">+${z}</span>` : ''}</td>`;
+    const mark = k => `<span class="mark">${MARK[k]}</span>`;
+    if (pad) return `<td class="bad"><span class="n">0<span class="ex">${mark('pad')}</span></span></td>`; // fallen team loses its zvanja too
+    return `<td><span class="n">${h.score[i]}<span class="ex">${h.caller === i ? '<sup>*</sup>' : ''}${z ? `<span class="zv">+${z}</span>` : ''}${h.stiglja === i ? mark('stiglja') : ''}</span></span></td>`;
   };
-  const rows = g.hands.map((h, k) => `<tr class="hand ${draft?.gid === g.id && draft.idx === k ? 'editing' : ''}" role="button" tabindex="0" aria-label="Ispravi ruku ${k + 1}"
+  const rows = g.hands.map((h, k) => !edit ? `<tr>${cell(h, 0)}${cell(h, 1)}</tr>` : `<tr class="hand ${draft?.gid === g.id && draft.idx === k ? 'editing' : ''}" role="button" tabindex="0" aria-label="Ispravi ruku ${k + 1}"
     onclick="editHand('${g.id}',${k})" onkeydown="if(event.key==='Enter')this.click()">${cell(h, 0)}${cell(h, 1)}</tr>`);
   while (rows.length < 6) rows.push('<tr><td></td><td></td></tr>'); // empty ruled lines, like paper
   const lead = t[0] === t[1] ? -1 : t[0] > t[1] ? 0 : 1, L = i => lead === i ? 'lead' : '';
@@ -279,17 +302,29 @@ function sheet(g) {
 }
 const SEAT = ['ja', 'desni protivnik', 'partner', 'lijevi protivnik'];
 const dealer = (g, k = 0) => ((g.dealer ?? 0) + g.hands.length + k) % 4; // index into SEAT
+function rematch(gid) {
+  const g = db.games.find(x => x.id === gid);
+  if (active()) return alert('Druga igra je već u tijeku.');
+  // same teams and target; dealing carries on from where the last game stopped
+  db.games.push({ id: uid(), date: Date.now(), teams: g.teams.map(t => [...t]), target: g.target, hands: [], belot: null, dealer: dealer(g) });
+  shownId = null; draft = null; save(); render(); scrollTo(0, 0);
+}
+// Seat map for picking the dealer: me at the bottom, partner across, opponents left and right.
+const PERSON = on => `<svg viewBox="0 0 24 24" aria-hidden="true"><g fill="${on ? 'currentColor' : 'none'}" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"><circle cx="12" cy="7.5" r="4"/><path d="M4 21a8 7 0 0 1 16 0z"/></g></svg>`;
+const seats = d => `<div class="seats">${SEAT.map((t, i) => `<button class="seat p${i} ${d === i ? 'on' : ''}" aria-pressed="${d === i}" onclick="setDealer(${i})">${PERSON(d === i)}<span>${t}</span></button>`).join('')}
+  <div class="table" aria-hidden="true">${SUIT.zvono}</div></div>`;
 function setDealer(i) { const g = active(); g.dealer = ((i - g.hands.length) % 4 + 4) % 4; pickDealer = false; save(); render(); }
 function gameView(g) {
   const w = winner(g);
   if (w != null) return `<div class="flash" role="status">${SUIT.zvono}${g.belot != null ? 'BELOT! ' : ''}Pobjeda: ${MV(w)} — ${esc(teamName(g.teams[w]))}!</div>
     ${sheet(g)}${draft?.gid === g.id ? handForm(g) : ''}
-    <button class="btn main wide" style="width:100%;margin-top:16px" onclick="shownId=null;draft=null;render()">Nova igra</button>`;
+    <button class="btn main wide" style="width:100%;margin-top:16px" onclick="rematch('${g.id}')">Iste ekipe, nova igra</button>
+    <button class="btn wide" style="width:100%;margin-top:10px" onclick="shownId=null;draft=null;render()">Nova igra s drugim igračima</button>`;
   return `${sheet(g)}
     <div class="dealer"><i>${SUIT[SUITS[g.hands.length % 4]]}</i><span>${dealer(g) ? 'Miješa' : 'Miješam'}</span>
       <button class="chip on" aria-expanded="${pickDealer}" aria-label="Miješa ${SEAT[dealer(g)]}, promijeni" onclick="pickDealer=!pickDealer;render()">${SEAT[dealer(g)]} ▾</button>
       <span class="muted small">zatim ${SEAT[dealer(g, 1)]}</span></div>
-    ${pickDealer ? `<div class="chips" style="justify-content:center">${SEAT.map((t, i) => `<button class="chip" onclick="setDealer(${i})">${t}</button>`).join('')}</div>` : ''}
+    ${pickDealer ? seats(dealer(g)) : ''}
     ${draft?.gid === g.id ? handForm(g) : `
       <div class="row" style="margin-top:16px">
         <button class="btn main wide" style="flex:2" onclick="newHand()">+ Upiši ruku</button>
@@ -411,7 +446,7 @@ function overview(g) {
     <h2 style="margin-top:6px">Igra br. ${gameNo(g)}</h2>
     <p class="st" style="margin:-4px 0 10px">${new Date(g.date).toLocaleDateString('hr-HR')} · do ${g.target} · ${g.hands.length} ruku ·
       ${w == null ? 'u tijeku' : `pobjeda ${MV(w)}${g.belot != null ? ' (belot)' : ''}`}</p>
-    ${sheet(g)}${draft?.gid === g.id ? handForm(g) : ''}
+    ${sheet(g, false)}
     <h2>Tijek igre</h2>
     <div class="legend">${T(i => `<span>${swatch(i)}${MV(i)} · ${esc(teamName(g.teams[i]))}</span>`).join('')}</div>
     ${g.hands.length ? chart(g) : '<p class="muted">Još nema upisanih ruku.</p>'}
@@ -519,12 +554,109 @@ function delPlayer(id) {
   if (confirm(`Obrisati ${pname(id)}?`)) { db.players = db.players.filter(p => p.id !== id); save(); render(); }
 }
 
+/* ---------- Turnir ---------- */
+const champion = t => bracket(t.teams.length, t.wins).at(-1)[0].w;
+const ROUND = (r, n) => ['Finale', 'Polufinale', 'Četvrtfinale'][n - 1 - r] ?? `${r + 1}. kolo`;
+function tourView() {
+  const open = db.tournaments.find(t => t.id === tid);
+  if (open) return bracketView(open);
+  const list = tourList(db.tournaments.filter(t => champion(t) == null));
+  return `${list ? '<h2>U tijeku</h2>' + list : ''}
+    <h2>Novi turnir</h2>
+    <input id="tname" placeholder="Naziv turnira" maxlength="40" autocomplete="off" aria-label="Naziv turnira">
+    <span class="lbl">Timovi, jedan po retku</span>
+    <textarea id="tteams" rows="6" placeholder="Ana &amp; Ivo&#10;Marko &amp; Luka&#10;…" aria-label="Timovi, jedan po retku"></textarea>
+    <div class="row pick" style="margin-top:12px"><label><input type="checkbox" id="tshuf" checked><span>Ždrijeb (nasumični parovi)</span></label></div>
+    <button class="btn main wide" style="width:100%;margin-top:14px" onclick="newTour()">Napravi turnir</button>
+    <p class="st">Gotovi turniri su pod Povijest → Povijest braketa.</p>`;
+}
+const tourList = ts => ts.sort((a, b) => b.date - a.date).map(t => {
+  const c = champion(t), n = t.teams.length;
+  return `<button class="line item" onclick="tid='${t.id}';render();scrollTo(0,0)"><span class="body"><span class="name">${esc(t.name)}</span>
+    <span class="st">${new Date(t.date).toLocaleDateString('hr-HR')} · ${n} ${plural(n, 'tim', 'tima', 'timova')} · ${c == null ? '<u>u tijeku</u>' : 'pobjednik: ' + esc(t.teams[c])}</span></span>
+    <span class="st">›</span></button>`;
+}).join('');
+function newTour() {
+  const teams = [...new Set($('#tteams').value.split(/\r?\n/).map(s => s.trim().slice(0, 40)).filter(Boolean))];
+  if (teams.length < 2) return alert('Upiši barem 2 tima, svaki u svoj redak.');
+  if ($('#tshuf').checked) for (let i = teams.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [teams[i], teams[j]] = [teams[j], teams[i]]; }
+  const t = { id: uid(), name: $('#tname').value.trim() || 'Turnir', date: Date.now(), teams, wins: {} };
+  db.tournaments.push(t); tid = t.id; save(); render(); scrollTo(0, 0);
+}
+function bracketView(t) {
+  const rounds = bracket(t.teams.length, t.wins), c = champion(t);
+  const side = (r, m, x, team) => team == null
+    ? `<span class="tm muted">${r === 0 ? 'slobodan' : '…'}</span>`
+    : `<button class="tm ${x.w === team ? 'win' : x.w != null ? 'out' : ''}" onclick="setWin(${r},${m},${team})" ${x.a == null || x.b == null ? 'disabled' : ''}>${esc(t.teams[team])}${x.w === team ? ' ✓' : ''}</button>`;
+  const cols = rounds.map((ms, r) => `<div class="rnd"><div class="rh">${ROUND(r, rounds.length)}</div><div class="ms">
+    ${ms.map((x, m) => `<div class="match">${side(r, m, x, x.a)}${side(r, m, x, x.b)}</div>`).join('')}</div></div>`).join('');
+  return `<button class="link" onclick="tid=null;render()">‹ natrag</button>
+    <div class="hhead"><h2 style="margin-top:6px">${esc(t.name)}</h2><button class="icon" onclick="renameTour()" aria-label="Preimenuj turnir">✎</button></div>
+    ${c != null ? `<div class="flash" role="status">${SUIT.zvono}Pobjednik: ${esc(t.teams[c])}!</div>` : '<p class="st">Dodirni tim koji je pobijedio. Ponovni dodir poništava.</p>'}
+    <div class="bracket">${cols}</div>
+    <h2>Timovi</h2>
+    ${t.teams.map((n, i) => `<div class="line"><div class="top"><span class="name">${esc(n)}</span><span style="flex:0 0 auto">
+      <button class="icon" onclick="renameTeam(${i})" aria-label="Preimenuj ${esc(n)}">✎</button>
+      <button class="icon bad" onclick="removeTeam(${i})" aria-label="Makni ${esc(n)}">✕</button></span></div></div>`).join('')}
+    <form class="row" style="margin-top:8px" onsubmit="event.preventDefault();addTeam()"><input id="tnew" placeholder="Dodaj tim…" maxlength="40" autocomplete="off" aria-label="Novi tim">
+      <button class="btn" style="flex:0 0 auto">Dodaj</button></form>
+    <button class="link bad" style="margin-top:14px" onclick="delTour()">obriši turnir</button>`;
+}
+function setWin(r, m, team) {
+  const t = db.tournaments.find(x => x.id === tid), k = r + '-' + m, was = champion(t), x = $('.bracket').scrollLeft;
+  if (t.wins[k] === team) delete t.wins[k]; else t.wins[k] = team;
+  save(); render(); $('.bracket').scrollLeft = x; // keep the bracket where it was scrolled
+  const c = champion(t);
+  if (c != null && c !== was) confetti();
+}
+function renameTeam(i) {
+  const t = db.tournaments.find(x => x.id === tid), n = prompt('Novo ime tima:', t.teams[i])?.trim().slice(0, 40);
+  if (!n) return;
+  if (t.teams.some((x, j) => j !== i && x === n)) return alert('Tim s tim imenom već postoji.');
+  t.teams[i] = n; save(); render();
+}
+// Applies a change to the open tournament; asks first if it would throw away results that no longer fit the bracket.
+function changeTour(fn) {
+  const t = db.tournaments.find(x => x.id === tid), c = structuredClone(t);
+  fn(c); c.wins = liveWins(c.teams.length, c.wins);
+  const lost = Object.keys(liveWins(t.teams.length, t.wins)).length - Object.keys(c.wins).length;
+  if (lost > 0 && !confirm(`Ova promjena briše ${lost} ${plural(lost, 'rezultat', 'rezultata', 'rezultata')} koji više ne odgovaraju braketu. Nastaviti?`)) return;
+  Object.assign(t, c); save(); render();
+}
+function addTeam() {
+  const n = $('#tnew').value.trim().slice(0, 40), t = db.tournaments.find(x => x.id === tid);
+  if (!n) return;
+  if (t.teams.includes(n)) return alert('Tim s tim imenom već postoji.');
+  changeTour(c => c.teams.push(n));
+}
+function removeTeam(i) {
+  const t = db.tournaments.find(x => x.id === tid);
+  if (t.teams.length <= 2) return alert('Turnir mora imati barem 2 tima.');
+  if (!confirm(`Maknuti ${t.teams[i]} iz turnira?`)) return;
+  changeTour(c => { // last team takes the free slot, so nobody else moves
+    const last = c.teams.length - 1;
+    for (const k in c.wins) if (c.wins[k] === i) delete c.wins[k]; else if (c.wins[k] === last) c.wins[k] = i;
+    c.teams[i] = c.teams[last]; c.teams.pop();
+  });
+}
+function renameTour() {
+  const t = db.tournaments.find(x => x.id === tid), n = prompt('Naziv turnira:', t.name)?.trim().slice(0, 40);
+  if (n) { t.name = n; save(); render(); }
+}
+function delTour() {
+  if (!confirm('Obrisati ovaj turnir?')) return;
+  db.tournaments = db.tournaments.filter(t => t.id !== tid); tid = null; save(); render();
+}
+
 /* ---------- Povijest ---------- */
 let openDays = null;
 const plural = (n, one, few, many) => n % 10 === 1 && n % 100 !== 11 ? one : n % 10 >= 2 && n % 10 <= 4 && (n % 100 < 12 || n % 100 > 14) ? few : many;
 function historyView() {
-  const open = db.games.find(g => g.id === histId);
+  const open = db.games.find(g => g.id === histId), tour = db.tournaments.find(t => t.id === tid);
   if (open) return overview(open);
+  if (tour) return bracketView(tour);
+  const tabs = `<div class="row pick" style="margin:6px 0 4px">${[['games', 'Povijest igara'], ['tours', 'Povijest braketa']].map(([k, l]) =>
+    `<label><input type="radio" name="htab" ${histTab === k ? 'checked' : ''} onchange="histTab='${k}';render()"><span>${l}</span></label>`).join('')}</div>`;
   const days = [];
   for (const g of db.games.slice().sort((a, b) => b.date - a.date)) {
     const k = new Date(g.date).toDateString();
@@ -548,9 +680,13 @@ function historyView() {
       ${d.games.map(item).join('')}</details>`;
   }).join('');
   const n = db.games.length;
-  return `<div class="hhead"><h2>Povijest</h2>${n ? `<button class="chip" onclick="toggleAllDays()" aria-label="Ukupno ${n} ${plural(n, 'igra', 'igre', 'igara')}, otvori ili zatvori sve dane">Σ ${n} ${plural(n, 'igra', 'igre', 'igara')}</button>` : ''}</div>${games || fan('big') + '<p class="muted center">Još nema igara.</p>'}
+  const list = histTab === 'tours'
+    ? tourList(db.tournaments.slice()) || fan('big') + '<p class="muted center">Još nema turnira.</p>'
+    : games || fan('big') + '<p class="muted center">Još nema igara.</p>';
+  return `<div class="hhead"><h2>Povijest</h2>${n && histTab === 'games' ? `<button class="chip" onclick="toggleAllDays()" aria-label="Ukupno ${n} ${plural(n, 'igra', 'igre', 'igara')}, otvori ili zatvori sve dane">Σ ${n} ${plural(n, 'igra', 'igre', 'igara')}</button>` : ''}</div>
+    ${tabs}${list}
     <h2>Sigurnosna kopija</h2>
-    <p class="st">Spremi sve igrače, igre i statistiku (npr. u iCloud ili pošalji sebi), ili ih vrati iz kopije.</p>
+    <p class="st">Spremi sve igrače, igre, turnire i statistiku (npr. u iCloud ili pošalji sebi), ili ih vrati iz kopije.</p>
     <div class="row"><button class="btn" onclick="exportBackup()">Izvezi</button>
       <button class="btn" onclick="$('#imp').click()">Uvezi</button>
       ${window.Capacitor ? `<button class="btn" onclick="const t=prompt('Zalijepi kopiju:');if(t)importText(t)">Zalijepi</button>` : ''}</div>
@@ -585,7 +721,7 @@ function importText(txt) {
   try { d = JSON.parse(txt); } catch { return alert('Kopija nije ispravna.'); }
   if (!validBackup(d)) return alert('Ovo nije Bela Blok sigurnosna kopija.');
   if (!confirm(`Uvesti ${d.players.length} igrača i ${d.games.length} igara? Trenutni podaci bit će ZAMIJENJENI.`)) return;
-  db = { players: d.players, games: d.games, theme: db.theme }; draft = null; save(); render();
+  db = { players: d.players, games: d.games, tournaments: d.tournaments ?? [], theme: db.theme }; draft = null; save(); render();
 }
 
 $('#hfan').innerHTML = fan();

@@ -37,7 +37,35 @@ function validBackup(d) {
       && isPair(g.teams) && g.teams.every(t => isPair(t) && t.every(isId)) && Array.isArray(g.hands)
       && g.hands.every(h => h && isTeam(h.caller) && isPair(h.score) && h.score.every(Number.isFinite)
         && isPair(h.zv) && h.zv.every(z => Array.isArray(z) && z.every(Number.isFinite))
-        && isPair(h.bela) && h.bela.every(isTeam) && (h.stiglja == null || isTeam(h.stiglja))));
+        && isPair(h.bela) && h.bela.every(isTeam) && (h.stiglja == null || isTeam(h.stiglja))))
+    && (d.tournaments == null || Array.isArray(d.tournaments) && d.tournaments.every(t => t && isId(t.id)
+      && typeof t.name === 'string' && Number.isFinite(t.date) && Array.isArray(t.teams) && t.teams.length >= 2
+      && t.teams.every(n => typeof n === 'string') && t.wins && typeof t.wins === 'object' && Object.values(t.wins).every(Number.isInteger)));
 }
 
-if (typeof module !== 'undefined') module.exports = { scoreHand, totals, winner, validBackup, HAND };
+// Single-elimination bracket. Round 1 match m is team m vs team half+m; missing teams up to the next power of 2 are byes (null).
+// That way a team added later fills the next free bye without moving anyone else.
+// wins = { 'round-match': team index }. A stored winner no longer in its match (an earlier result was fixed) is ignored.
+function bracket(n, wins) {
+  let size = 2; while (size < n) size *= 2;
+  const half = size / 2;
+  let pairs = Array.from({ length: half }, (_, m) => [m, half + m < n ? half + m : null]);
+  const rounds = [];
+  for (let r = 0; pairs.length; r++) {
+    const ms = pairs.map(([a, b], m) => {
+      const s = wins[r + '-' + m];
+      return { a, b, w: r === 0 && b == null ? a : a != null && b != null && (s === a || s === b) ? s : null };
+    });
+    rounds.push(ms);
+    pairs = ms.length > 1 ? ms.filter((_, m) => m % 2 === 0).map((x, m) => [x.w, ms[2 * m + 1].w]) : [];
+  }
+  return rounds;
+}
+// Only the results that still count (drops ones made stale by a fixed result or a changed team list).
+function liveWins(n, wins) {
+  const out = {};
+  bracket(n, wins).forEach((ms, r) => ms.forEach((x, m) => { if (x.w != null && x.b != null) out[r + '-' + m] = x.w; }));
+  return out;
+}
+
+if (typeof module !== 'undefined') module.exports = { scoreHand, totals, winner, validBackup, bracket, liveWins, HAND };
