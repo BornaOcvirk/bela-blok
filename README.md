@@ -25,6 +25,8 @@ igrači koji se miješaju u parove i statistika po igraču. Svijetla i tamna tem
 Sve radi i bez računa. Račun samo dodaje oblak: tko se registrira, dobije korisničko ime, a kad ga netko na svom
 mobitelu poveže s igračem (**Igrači → ☁ → korisničko ime**), završene igre tog igrača šalju se u oblak.
 U **prijava / ime** (gore lijevo) svatko vidi svoju statistiku iz igara sa svih mobitela.
+Nakon registracije treba potvrditi e-mail (poveznica u e-mailu); tek tada se igre šalju u oblak.
+Račun se briše u **Račun → Obriši račun** (briše i igre koje si poslao).
 Igre odigrane bez interneta pošalju se same kad se veza vrati. Za slanje igara mora biti prijavljen onaj tko vodi zapisnik.
 
 ### Postavljanje (jednom, besplatno)

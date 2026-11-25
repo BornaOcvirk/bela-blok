@@ -84,7 +84,7 @@ input::placeholder{color:var(--soft);opacity:.6}
 .table svg.s{width:30px;height:30px}
 /* slide-up panel */
 .backdrop{position:fixed;inset:0;z-index:20;background:rgba(0,0,0,.4);animation:fade .25s}
-.panel{position:fixed;left:0;right:0;bottom:0;z-index:21;max-width:640px;margin:0 auto;background:var(--paper);border-top:2px solid var(--ink);border-radius:22px 22px 0 0;padding:10px 16px calc(24px + env(safe-area-inset-bottom));animation:up .32s cubic-bezier(.2,.8,.2,1)}
+.panel{position:fixed;left:0;right:0;bottom:0;z-index:21;max-width:640px;max-height:88vh;overflow-y:auto;margin:0 auto;background:var(--paper);border-top:2px solid var(--ink);border-radius:22px 22px 0 0;padding:10px 16px calc(24px + env(safe-area-inset-bottom));animation:up .32s cubic-bezier(.2,.8,.2,1)}
 .panel h2{margin:10px 0 0}
 .grab{display:block;width:40px;height:5px;border-radius:3px;background:var(--rule);margin:0 auto}
 @keyframes up{from{transform:translateY(100%)}}@keyframes fade{from{opacity:0}}
@@ -130,9 +130,10 @@ span.tm,.tm:disabled{cursor:default}
 .item .st{display:block}
 .name{font-size:22px;overflow-wrap:anywhere}
 .st{font-size:15px;color:var(--soft);margin-top:2px}
-.opts{margin-top:8px}.opts>span{flex:0 0 64px}.opts>.chip{flex:0 0 auto;min-width:40px}.opts input{font-size:18px;flex:0 0 70px}
+.tools{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px}.tools .chip{padding:7px 12px}.chip svg{display:inline-block;width:16px;height:16px;vertical-align:-3px;margin-right:5px}
+.grid3{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}.grid3 .btn{padding:8px 4px;font-size:16px}
+.stepper{margin-top:12px}.stepper>span{flex:0 0 auto;color:var(--soft)}.stepper .btn{flex:0 0 52px;font-size:22px;padding:4px}.stepper b{text-align:center;font-size:24px}
 .pager{margin-top:14px}.pager .btn{flex:0 0 64px}
-select{padding-right:16px;background:linear-gradient(45deg,transparent 50%,currentColor 50%) right 7px center/5px 5px no-repeat,linear-gradient(135deg,currentColor 50%,transparent 50%) right 2px center/5px 5px no-repeat}
 .icon{background:none;border:0;font-size:18px;padding:4px 6px;cursor:pointer}
 .item{display:flex;align-items:center;gap:12px}.item>.body{flex:1;min-width:0}
 .no{flex:0 0 auto;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;width:42px;height:56px;background:var(--card);color:#1b1b18;border:1.5px solid #1b1b18;border-radius:7px;box-shadow:1px 2px 0 rgba(0,0,0,.18);font-size:20px;font-weight:600;line-height:1}
@@ -203,7 +204,7 @@ const SUIT = {
 srce: '<svg class="s" viewBox="0 0 24 24" aria-hidden="true"><path fill="#e0332a" stroke="#5a120e" stroke-width="1.1" stroke-linejoin="round" d="M12 21.2C5.6 16.9 2.2 13.2 2.2 8.9A4.9 4.9 0 0 1 12 6.9a4.9 4.9 0 0 1 9.8 2c0 4.3-3.4 8-9.8 12.3z"/><path fill="#a81f1a" d="M5 15.6c2 2 4.3 3.7 7 5.6 2.7-1.9 5-3.6 7-5.6z"/></svg>',
   zir: '<svg class="s" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="20.6" r="2.4" fill="#2e8b34" stroke="#173f12" stroke-width="1"/><path fill="#8a3b1e" stroke="#3a1a08" stroke-width="1.1" stroke-linejoin="round" d="M6.3 11.2h11.4v4.2c0 2.6-2.5 4.3-5.7 4.3s-5.7-1.7-5.7-4.3z"/><path fill="#d8402a" d="M6.85 11.8h10.3v2.2H6.85z"/><path fill="#f3c51c" stroke="#3a1a08" stroke-width="1.1" stroke-linejoin="round" d="M6.8 11.2V8.4a5.2 5.2 0 0 1 10.4 0v2.8z"/><path fill="none" stroke="#fff6b8" stroke-width="1.2" stroke-linecap="round" d="M9 9.6V8.4a3 3 0 0 1 1.4-2.5"/></svg>',
   list: '<svg class="s" viewBox="0 0 24 24" aria-hidden="true"><path fill="none" stroke="#8a5a1c" stroke-width="1.6" stroke-linecap="round" d="M12 18.6c0 2 .6 3.4 2.2 4.4"/><path fill="#3c9a3a" d="M12 18.6C9 21 3.5 19 3.2 14 3 10.5 4 7 5 4.5c2 1.5 3.6 1.9 4.6 2.1Q10.5 4 12 1.8q1.5 2.2 2.4 4.8c1-.2 2.6-.6 4.6-2.1 1 2.5 2 6 1.8 9.5-.3 5-5.8 7-8.8 4.6z"/><path fill="#ecc935" d="M12 18.6C9 21 3.5 19 3.2 14 3 10.5 4 7 5 4.5c2 1.5 3.6 1.9 4.6 2.1Q10.5 4 12 1.8z"/><path fill="none" stroke="#1d3d14" stroke-width="1.1" stroke-linejoin="round" d="M12 18.6C9 21 3.5 19 3.2 14 3 10.5 4 7 5 4.5c2 1.5 3.6 1.9 4.6 2.1Q10.5 4 12 1.8q1.5 2.2 2.4 4.8c1-.2 2.6-.6 4.6-2.1 1 2.5 2 6 1.8 9.5-.3 5-5.8 7-8.8 4.6z"/><path fill="none" stroke="#1d3d14" stroke-width=".8" stroke-linecap="round" d="M12 4.5v14M12 9l-3.6-2M12 12.5l-5.2-2.4M12 16l-5.6-1.6M12 9l3.6-2M12 12.5l5.2-2.4M12 16l5.6-1.6"/></svg>',
-  zvono: '<svg class="s" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12.5" r="9" fill="#f3c51c"/><path fill="#d8402a" d="M3.2 14.2Q12 10.4 20.4 9.3L21 12.3Q12.6 13.6 4.2 16.9z"/><path fill="none" stroke="#2e8b34" stroke-width="1.8" stroke-linecap="round" d="M10 19.2c1.1-1.4 2.2 1 3.3-.4s2.2 1 3.3-.4"/><path stroke="#3a2a05" stroke-width="2.4" stroke-linecap="round" d="M8.6 6.2l1.8 1.8"/><circle cx="12" cy="12.5" r="9" fill="none" stroke="#3a2a05" stroke-width="1.1"/></svg>',
+  zvono: '<svg class="s" viewBox="0 0 24 24" aria-hidden="true"><path fill="none" stroke="#5a120e" stroke-width="1.2" d="M12 19.4v1.2"/><circle cx="12" cy="21.8" r="1.2" fill="none" stroke="#d8402a" stroke-width="1.1"/><circle cx="12" cy="9.6" r="7.6" fill="#f3c51c" stroke="#3a2a05" stroke-width="1.1"/><path fill="none" stroke="#fff6b8" stroke-width="1.3" stroke-linecap="round" d="M6.9 8.6a5.4 5.4 0 0 1 3.4-4.4"/><circle cx="15.3" cy="5.4" r="1.25" fill="#1b1b18"/><path fill="#d8402a" stroke="#5a120e" stroke-width="1" stroke-linejoin="round" d="M4.5 11.4Q12 13.5 19.5 11.4L19.8 14.1Q12 16.3 4.2 14.1Z"/><path fill="none" stroke="#8f1d14" stroke-width=".8" stroke-linejoin="round" d="M5.4 13.1l1.3 1 1.3-.8 1.3 1 1.4-.8 1.3 1 1.4-1 1.3.8 1.4-1 1.3.8 1.3-1"/><path fill="#3c9a3a" stroke="#1d3d14" stroke-width="1" stroke-linejoin="round" d="M4.4 14.3c-.7 1.8.2 3 1.7 3 .2 1.4 1.4 2 2.6 1.4.8 1.3 2.3 1.4 3.3.5 1 .9 2.5.8 3.3-.5 1.2.6 2.4 0 2.6-1.4 1.5 0 2.4-1.2 1.7-3Q12 16.6 4.4 14.3Z"/><path fill="none" stroke="#1d3d14" stroke-width=".7" stroke-linecap="round" d="M7.6 15.9q.6 1 1.2 1.6M12 16.4v1.8M16.4 15.9q-.6 1-1.2 1.6"/></svg>', // sleigh bell as on the cards
 };
 const SUITS = Object.keys(SUIT);
 document.querySelector('#loader .fan').innerHTML = SUITS.map(k => `<i>${SUIT[k]}</i>`).join('');
@@ -256,7 +257,7 @@ function applyTheme() {
 }
 function cycleTheme() { db.theme = { auto: 'light', light: 'dark', dark: 'auto' }[db.theme]; save(); applyTheme(); }
 
-function go(v) { view = v; pickDealer = false; render(); }
+function go(v) { view = v; pickDealer = fopen = false; render(); }
 const TABS = ['game', 'players', 'history', 'tour'];
 function placeInd() {
   const sp = $('nav button.on span'), ind = $('.ind');
@@ -281,10 +282,12 @@ function render() {
 }
 function draw() {
   document.querySelectorAll('nav button').forEach(b => b.classList.toggle('on', b.dataset.v === view));
-  Object.assign($('#accBtn'), { hidden: !cloud(), textContent: me() ? me().name || 'račun' : 'prijava' });
+  Object.assign($('#accBtn'), { hidden: !cloud(), textContent: !me() ? 'prijava' : !verified() ? 'potvrdi e-mail' : me().name || 'račun' });
   placeInd();
   const g = db.games.find(x => x.id === shownId) || active();
-  $('#sheet').innerHTML = view === 'game' && pickDealer && g && winner(g) == null ? `<div class="backdrop" onclick="pickDealer=false;render()"></div>
+  $('#sheet').innerHTML = view === 'players' && fopen ? `<div class="backdrop" onclick="fopen=false;render()"></div>
+    <div class="panel" role="dialog" aria-modal="true" aria-label="Poredaj i filtriraj"><span class="grab"></span><div id="fp">${fpanel()}</div></div>`
+    : view === 'game' && pickDealer && g && winner(g) == null ? `<div class="backdrop" onclick="pickDealer=false;render()"></div>
     <div class="panel" role="dialog" aria-modal="true" aria-label="Tko miješa"><span class="grab"></span>
       <h2>Miješa: ${SEAT[pend]}</h2>${seats(pend)}
       <div class="row" style="margin-top:14px"><button class="btn" onclick="pickDealer=false;render()">Odustani</button><button class="btn main" onclick="setDealer(pend)">Potvrdi</button></div></div>` : '';
@@ -595,23 +598,39 @@ function allStats(games = db.games) {
 }
 const statLines = s => `<div class="st">${s.g} igara · ${s.w} pobjeda${s.g ? ` (${Math.round(s.w / s.g * 100)}%)` : ''} · ${s.g - s.w} poraza · ${s.pts} bodova</div>
       <div class="st">zvanja ${s.zv} · belot ${s.belot} · štiglje ${s.st} · padovi ${s.pad}</div>`;
-// Igrači: pq is what's typed in the name field (also filters the list); then sort, filter (at least pmin of pfilt) and page.
-let pq = '', psort = 'w', pdesc = true, pfilt = '', pmin = 1, ppage = 0, linkId = null;
-const PER = 20;
+// Igrači: pq is what's typed in the name field (also filters the list); pf is the sort and filter (sortPlayers options), set in a slide-up panel.
+let pq = '', pf = { sort: 'w', desc: true, filter: '', min: 1 }, fopen = false, ppage = 0, linkId = null;
+const PER = 8;
 const prows = () => { $('#pl').innerHTML = playerRows(); };
+const SORTS = [['w', 'Pobjede'], ['pct', '% pobjeda'], ['g', 'Igre'], ['pts', 'Bodovi'], ['name', 'Ime']];
+const FILTS = [['', 'Sve'], ['w', 'Pobjede'], ['l', 'Porazi'], ['g', 'Igre'], ['pct', '% pobjeda']];
+const FUNNEL = '<svg viewBox="0 0 24 24" aria-hidden="true"><path fill="none" stroke="currentColor" stroke-width="2.2" stroke-linejoin="round" d="M3.5 4.5h17l-6.6 7.8v6l-3.8 2v-8z"/></svg>';
+const fsum = () => pf.filter === 'pct' ? `${pf.min} %+ pobjeda` : `${pf.min}+ ${{ w: 'pobjeda', l: 'poraza', g: 'igara' }[pf.filter]}`;
+function ptools() {
+  const sl = SORTS.find(x => x[0] === pf.sort)[1].toLowerCase();
+  return `<button class="chip" onclick="fopen=true;render()" aria-label="Poredano po: ${sl}, ${pf.desc ? 'silazno' : 'uzlazno'}. Promijeni">⇅ ${sl} ${pf.desc ? '↓' : '↑'}</button>
+    <button class="chip ${pf.filter ? 'on' : ''}" onclick="fopen=true;render()">${FUNNEL}Filteri${pf.filter ? ' · ' + fsum() : ''}</button>`;
+}
+// Inside of the sort/filter panel. Taps redraw only this, the toolbar and the list, so the panel doesn't slide in again.
+function fpanel() {
+  const b = (on, click, label) => `<button class="btn ${on ? 'on' : ''}" aria-pressed="${on}" onclick="${click}">${label}</button>`;
+  const dir = pf.sort === 'name' ? (pf.desc ? 'Ž → A' : 'A → Ž') : pf.desc ? '↓ Najviše prvo' : '↑ Najmanje prvo';
+  const step = pf.filter === 'pct' ? 10 : 1;
+  return `<h2>Poredaj po</h2><div class="grid3">${SORTS.map(([k, l]) => b(pf.sort === k, `setF({sort:'${k}',desc:${k !== 'name'}})`, l)).join('')}</div>
+    <button class="btn" style="width:100%;margin-top:8px" onclick="setF({desc:${!pf.desc}})">${dir}</button>
+    <h2>Prikaži samo</h2><div class="grid3">${FILTS.map(([k, l]) => b(pf.filter === k, `setF({filter:'${k}'})`, l)).join('')}</div>
+    ${pf.filter ? `<div class="row stepper"><span>barem</span><button class="btn" onclick="setF({min:${Math.max(0, pf.min - step)}})" aria-label="Manje">−</button>
+      <b aria-live="polite">${pf.min}${pf.filter === 'pct' ? ' %' : ''}</b><button class="btn" onclick="setF({min:${pf.min + step}})" aria-label="Više">+</button></div>` : ''}
+    <button class="btn main wide" style="width:100%;margin-top:18px" onclick="fopen=false;render()">Gotovo</button>`;
+}
+function setF(o) { Object.assign(pf, o); ppage = 0; $('#fp').innerHTML = fpanel(); $('#ptools').innerHTML = ptools(); prows(); }
 function playersView() {
-  const opts = (list, cur) => list.map(([v, l]) => `<option value="${v}" ${v === cur ? 'selected' : ''}>${l}</option>`).join('');
   return `<h2>Igrači</h2>
     <form class="row" onsubmit="addPlayer(event)"><input id="pname" placeholder="Upiši ime ili traži…" maxlength="30" autocomplete="off" aria-label="Ime igrača ili traži"
       value="${esc(pq)}" oninput="pq=this.value;ppage=0;prows()">
     <button class="btn" style="flex:0 0 auto">Dodaj</button>
 </form>
-    <div class="row opts"><span class="muted small">Poredaj</span>
-      <select aria-label="Poredaj po" onchange="psort=this.value;pdesc=psort!=='name';ppage=0;render()">${opts([['w', 'pobjede'], ['pct', '% pobjeda'], ['g', 'igre'], ['pts', 'bodovi'], ['name', 'ime']], psort)}</select>
-      <button class="chip" onclick="pdesc=!pdesc;ppage=0;render()" aria-label="${pdesc ? 'Silazno' : 'Uzlazno'}, promijeni">${pdesc ? '↓' : '↑'}</button></div>
-    <div class="row opts"><span class="muted small">Prikaži</span>
-      <select aria-label="Prikaži" onchange="pfilt=this.value;ppage=0;render()">${opts([['', 'sve'], ['w', 'barem N pobjeda'], ['l', 'barem N poraza'], ['g', 'barem N igara'], ['pct', 'barem N % pobjeda']], pfilt)}</select>
-      ${pfilt ? `<input type="number" inputmode="numeric" min="0" value="${pmin}" aria-label="N" oninput="pmin=+this.value||0;ppage=0;prows()">` : ''}</div>
+    <div id="ptools" class="tools">${ptools()}</div>
     <div id="pl">${playerRows()}</div>`;
 }
 function playerRows() {
@@ -623,10 +642,10 @@ function playerRows() {
       <button class="icon bad" onclick="delPlayer('${p.id}')" aria-label="Obriši ${esc(p.name)}">✕</button></span></div>
       ${linkId === p.id ? `<form class="row" onsubmit="linkPlayer(event,'${p.id}')"><input id="lname" placeholder="Korisničko ime računa" autocapitalize="none" autocomplete="off" aria-label="Korisničko ime računa">
         <button class="btn" style="flex:0 0 auto">Poveži</button></form>` : ''}`;
-  const list = sortPlayers(db.players.filter(p => !p.guest && hit(p)).map(p => ({ p, s: st[p.id] ?? blank() })), { sort: psort, desc: pdesc, filter: pfilt, min: pmin });
-  if (!pfilt) list.push(...db.players.filter(p => p.guest && hit(p)).sort((a, b) => a.name.localeCompare(b.name, 'hr')).map(p => ({ p }))); // guests have no stats: last, and not when filtering
+  const list = sortPlayers(db.players.filter(p => !p.guest && hit(p)).map(p => ({ p, s: st[p.id] ?? blank() })), pf);
+  if (!pf.filter) list.push(...db.players.filter(p => p.guest && hit(p)).sort((a, b) => a.name.localeCompare(b.name, 'hr')).map(p => ({ p }))); // guests have no stats: last, and not when filtering
   if (!db.players.length) return fan('big') + '<p class="muted center">Još nema igrača.</p>';
-  if (!list.length) return pfilt ? '<p class="muted">Nitko ne odgovara odabiru.</p>' : `<p class="muted">Nema igrača „${esc(pq.trim())}”. Dodirni <u>Dodaj</u>.</p>`;
+  if (!list.length) return pf.filter ? '<p class="muted">Nitko ne odgovara odabiru.</p>' : `<p class="muted">Nema igrača „${esc(pq.trim())}”. Dodirni <u>Dodaj</u>.</p>`;
   const pages = Math.ceil(list.length / PER);
   ppage = Math.min(ppage, pages - 1);
   const shown = list.slice(ppage * PER, (ppage + 1) * PER);
@@ -1017,7 +1036,7 @@ const FB = { apiKey: 'AIzaSyALMHbKlj_rD_ECmq30VIJHiyHTbPSGsNs', project: 'belabl
 const AKEY = 'belablok-auth'; // kept apart from db so it never ends up in a backup
 let acc = null;
 try { acc = JSON.parse(localStorage.getItem(AKEY)); } catch {}
-acc ??= { sent: {} }; // { uid, email, name, token, refresh, exp, sent: { gameId: hash of the copy in the cloud } }
+acc ??= { sent: {} }; // { uid, email, name, want, token, refresh, exp, sent: { gameId: hash of the copy in the cloud } }
 const saveAcc = () => localStorage.setItem(AKEY, JSON.stringify(acc));
 const cloud = () => !!FB.apiKey;
 const me = () => cloud() && acc.uid ? acc : null;
@@ -1035,8 +1054,8 @@ function signedIn(d) { // answer of signUp / signInWithPassword
   acc = { ...acc, uid: d.localId, email: d.email, name: d.displayName || '', token: d.idToken, refresh: d.refreshToken, exp: Date.now() + d.expiresIn * 1000 };
   saveAcc();
 }
-async function token() {
-  if (Date.now() > acc.exp - 60e3) {
+async function token(force) {
+  if (force || Date.now() > acc.exp - 60e3) {
     let d;
     try { d = await call(`https://securetoken.googleapis.com/v1/token?key=${FB.apiKey}`, { method: 'POST', body: new URLSearchParams({ grant_type: 'refresh_token', refresh_token: acc.refresh }) }); }
     catch (e) { if (e.status === 400) { logout(); e.message = 'Prijava je istekla, prijavi se ponovno.'; } throw e; }
@@ -1051,6 +1070,9 @@ const fields = o => ({ fields: Object.fromEntries(Object.entries(o).map(([k, v])
 const fs = async (method, path, body) => call(`https://firestore.googleapis.com/v1/projects/${FB.project}/databases/(default)/documents${path}`,
   { method, headers: { Authorization: 'Bearer ' + await token(), 'Content-Type': 'application/json' }, body: body && JSON.stringify(body) });
 
+// The login token says whether the email is confirmed; the rules check the same claim before any upload.
+const claims = () => { try { return JSON.parse(atob(acc.token.split('.')[1].replace(/-/g, '+').replace(/_/g, '/'))); } catch { return {}; } };
+const verified = () => !!claims().email_verified;
 const nameOk = n => /^[a-z0-9_.]{3,20}$/i.test(n);
 const NAME_RULE = 'Korisničko ime: 3–20 slova (bez kvačica), brojki, _ ili .';
 async function setName(name) {
@@ -1068,7 +1090,7 @@ function logout() { acc = { sent: {} }; saveAcc(); linkId = null; render(); }
 let syncing = false, again = false;
 const hash = s => { let h = 0; for (let i = 0; i < s.length; i++) h = h * 31 + s.charCodeAt(i) | 0; return h.toString(36); };
 async function sync() {
-  if (!me()) return;
+  if (!me() || !verified()) return;
   if (syncing) { again = true; return; }
   syncing = true;
   try {
@@ -1109,6 +1131,10 @@ function accountView() {
   accErr = '';
   const field = (id, label, type, extra = '') => `<span class="lbl">${label}</span><input id="${id}" type="${type}" ${extra} aria-label="${label}">`;
   const nameField = () => field('aname', 'Korisničko ime', 'text', `value="${esc(af.name)}" oninput="af.name=this.value" maxlength="20" autocapitalize="none" autocomplete="username"`);
+  if (u && !verified()) return `<h2>Potvrdi e-mail</h2><p class="st">Poslali smo poveznicu na <b>${esc(u.email)}</b> (pogledaj i neželjenu poštu).
+    Otvori je, pa se vrati ovamo. Dok e-mail nije potvrđen, igre se ne šalju u oblak.</p>${err}
+    <button class="btn main wide" style="width:100%;margin-top:16px" onclick="checkVerified()">Potvrdio sam</button>
+    <div class="row" style="margin-top:10px"><button class="btn" onclick="sendVerify()">Pošalji ponovno</button><button class="btn" onclick="logout()">Odjava</button></div>`;
   if (u && !u.name) return `<h2>Odaberi korisničko ime</h2><p class="st">Po njemu te drugi povezuju sa svojim igračem. ${NAME_RULE}</p>
     <form onsubmit="accName(event)">${nameField()}${err}
       <button class="btn main wide" style="width:100%;margin-top:16px">Spremi</button></form>
@@ -1120,7 +1146,11 @@ function accountView() {
       <p class="st" style="margin-top:-4px">Sve završene igre u kojima je tvoj igrač povezan s ovim računom, s bilo kojeg mobitela.</p>
       <div class="line">${mine === 'load' ? '<p class="muted">Učitavam…</p>' : mine.err ? `<p class="bad">${esc(mine.err)}</p>` : statLines(mine)}</div>
       <p class="st">Na stranici Igrači dodirni ☁ uz igrača i upiši njegovo korisničko ime: njegove igre s ovog mobitela ulaze u njegovu statistiku.</p>
-      <button class="btn wide" style="width:100%;margin-top:16px" onclick="logout()">Odjava</button>`;
+      <button class="btn wide" style="width:100%;margin-top:16px" onclick="logout()">Odjava</button>
+      <details class="day" style="margin-top:20px"><summary class="bad">Obriši račun</summary>
+        <p class="st">Briše račun, korisničko ime i sve igre koje si poslao u oblak. Igre i igrači na ovom mobitelu ostaju. Ne može se poništiti.</p>
+        <form onsubmit="delAccount(event)">${field('dpw', 'Lozinka za potvrdu', 'password', 'autocomplete="current-password"')}
+          <button class="btn red wide" style="width:100%;margin-top:14px">Trajno obriši račun</button></form></details>`;
   }
   const reg = accTab === 'reg';
   return `<h2>Račun</h2><p class="st">Nije obavezan, sve radi i bez njega. S računom tvoje igre s bilo kojeg mobitela ulaze u tvoju statistiku.</p>
@@ -1144,10 +1174,35 @@ const accSubmit = e => busy(e, async () => {
   if (accTab === 'reg' && !nameOk(af.name.trim())) throw new Error(NAME_RULE); // before the account exists
   signedIn(await idt(accTab === 'reg' ? 'signUp' : 'signInWithPassword', { email, password, returnSecureToken: true }));
   mine = null;
-  if (accTab === 'reg') await setName(af.name.trim()); // if the name is taken, the page asks for another one
+  if (accTab === 'reg') { acc.want = af.name.trim(); saveAcc(); await idt('sendOobCode', { requestType: 'VERIFY_EMAIL', idToken: acc.token }); }
   sync();
 });
 const accName = e => busy(e, async () => { await setName(af.name.trim()); sync(); });
+const sendVerify = () => busy(null, async () => {
+  await idt('sendOobCode', { requestType: 'VERIFY_EMAIL', idToken: await token() });
+  alert('Poslali smo novu poveznicu.');
+});
+// The username is reserved only once the email is confirmed (the rules require it); acc.want keeps the one typed at Registracija.
+const checkVerified = () => busy(null, async () => {
+  await token(true); // a fresh token carries the new email_verified
+  if (!verified()) throw new Error('E-mail još nije potvrđen. Otvori poveznicu iz e-maila pa pokušaj ponovno.');
+  if (!acc.name && acc.want) { af.name = acc.want; await setName(acc.want); } // if it fails, the page asks for another name
+  sync();
+});
+const delAccount = e => busy(e, async () => {
+  if (!confirm('Trajno obrisati račun? Ovo se ne može poništiti.')) return;
+  signedIn(await idt('signInWithPassword', { email: acc.email, password: $('#dpw').value, returnSecureToken: true })); // Firebase wants a fresh login before deleting
+  const res = await fs('POST', ':runQuery', { structuredQuery: { from: [{ collectionId: 'games' }],
+    where: { fieldFilter: { field: { fieldPath: 'by' }, op: 'EQUAL', value: { stringValue: acc.uid } } } } });
+  for (const r of res) if (r.document) await fs('DELETE', '/' + r.document.name.split('/documents/')[1]);
+  if (acc.name) await fs('DELETE', '/usernames/' + acc.name.toLowerCase()).catch(e => { if (!e.status) throw e; }); // already gone is fine
+  await idt('delete', { idToken: acc.token });
+  const uid = acc.uid;
+  logout();
+  db.players.forEach(p => { if (p.uid === uid) { delete p.uid; delete p.acct; } }); // links to the deleted account on this phone
+  save();
+  alert('Račun je obrisan.');
+});
 const resetPw = () => busy(null, async () => {
   await idt('sendOobCode', { requestType: 'PASSWORD_RESET', email: af.email.trim() });
   alert('Poslali smo e-mail za novu lozinku.');
@@ -1178,7 +1233,7 @@ applyTheme(); render();
 setTimeout(() => { $('#loader').classList.add('out'); setTimeout(() => $('#loader').remove(), 300); }, Math.max(0, 1300 - performance.now()));
 addEventListener('resize', placeInd);
 sync(); addEventListener('online', sync); // upload anything left over from offline
-addEventListener('keydown', e => { if (e.key === 'Escape' && pickDealer) { pickDealer = false; render(); } }); document.fonts?.ready.then(placeInd);
+addEventListener('keydown', e => { if (e.key === 'Escape' && (pickDealer || fopen)) { pickDealer = fopen = false; render(); } }); document.fonts?.ready.then(placeInd);
 if ('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js').catch(() => {});
 navigator.storage?.persist?.().catch(() => {}); // ask iOS not to clear players and games when space runs low
 // A home-screen web app resumes the old page instead of reloading, so it would keep running an old version.
