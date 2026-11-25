@@ -27,6 +27,7 @@ button,input,select{font:inherit;color:inherit}
 header{position:relative;display:flex;justify-content:center;max-width:640px;margin:0 auto;padding:calc(14px + env(safe-area-inset-top)) 16px 4px}
 h1{margin:0;font-size:30px;line-height:1.1;color:var(--green);border-bottom:4px double var(--green)}
 .theme{position:absolute;right:16px;top:calc(14px + env(safe-area-inset-top));background:none;border:0;font-size:17px;padding:4px 0 4px 8px;color:var(--soft);text-decoration:underline;cursor:pointer}
+.acct{right:auto;left:16px;padding:4px 8px 4px 0;max-width:28%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 main{max-width:640px;margin:0 auto;padding:8px 16px 16px}
 h2{margin:18px 0 8px;font-size:22px;color:var(--green)}
 .lbl{display:block;font-size:15px;color:var(--soft);margin:14px 0 4px}
@@ -129,6 +130,9 @@ span.tm,.tm:disabled{cursor:default}
 .item .st{display:block}
 .name{font-size:22px;overflow-wrap:anywhere}
 .st{font-size:15px;color:var(--soft);margin-top:2px}
+.opts{margin-top:8px}.opts>span{flex:0 0 64px}.opts>.chip{flex:0 0 auto;min-width:40px}.opts input{font-size:18px;flex:0 0 70px}
+.pager{margin-top:14px}.pager .btn{flex:0 0 64px}
+select{padding-right:16px;background:linear-gradient(45deg,transparent 50%,currentColor 50%) right 7px center/5px 5px no-repeat,linear-gradient(135deg,currentColor 50%,transparent 50%) right 2px center/5px 5px no-repeat}
 .icon{background:none;border:0;font-size:18px;padding:4px 6px;cursor:pointer}
 .item{display:flex;align-items:center;gap:12px}.item>.body{flex:1;min-width:0}
 .no{flex:0 0 auto;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;width:42px;height:56px;background:var(--card);color:#1b1b18;border:1.5px solid #1b1b18;border-radius:7px;box-shadow:1px 2px 0 rgba(0,0,0,.18);font-size:20px;font-weight:600;line-height:1}
@@ -204,7 +208,7 @@ srce: '<svg class="s" viewBox="0 0 24 24" aria-hidden="true"><path fill="#e0332a
 const SUITS = Object.keys(SUIT);
 document.querySelector('#loader .fan').innerHTML = SUITS.map(k => `<i>${SUIT[k]}</i>`).join('');
 </script>
-<header><div class="brand"><h1>Bela Blok</h1><span id="hfan"></span></div><button id="themeBtn" class="theme" onclick="cycleTheme()" aria-label="Promijeni temu (auto / dan / noć)">auto</button></header>
+<header><button id="accBtn" class="theme acct" onclick="mine=null;go('account')" aria-label="Račun" hidden></button><div class="brand"><h1>Bela Blok</h1><span id="hfan"></span></div><button id="themeBtn" class="theme" onclick="cycleTheme()" aria-label="Promijeni temu (auto / dan / noć)">auto</button></header>
 <main id="app"></main>
 <div id="sheet"></div>
 <nav>
@@ -224,7 +228,7 @@ db.tournaments ??= [];
 // tournaments made before teams had players stored plain names
 const fixTours = () => db.tournaments.forEach(t => { t.v ??= 1; t.teams = t.teams.map(x => typeof x === 'string' ? { name: x, players: [] } : x); });
 fixTours();
-const save = () => { try { localStorage.setItem(KEY, JSON.stringify(db)); } catch { alert('Spremanje nije uspjelo!'); } };
+const save = () => { try { localStorage.setItem(KEY, JSON.stringify(db)); } catch { alert('Spremanje nije uspjelo!'); } sync(); };
 
 let pickDealer = false, pend = 0, lastPage = null, tid = null, histTab = 'games', tpicks = [null, null], tteam = '';
 const newDraft = () => ({ name: '', mode: 'kup', target: 1001, teams: [], shuffle: true, third: true, bo3: false });
@@ -256,6 +260,7 @@ function go(v) { view = v; pickDealer = false; render(); }
 const TABS = ['game', 'players', 'history', 'tour'];
 function placeInd() {
   const sp = $('nav button.on span'), ind = $('.ind');
+  ind.style.opacity = sp ? 1 : 0; // Račun has no tab
   if (sp) { const r = sp.getBoundingClientRect(); ind.style.width = r.width + 'px'; ind.style.transform = `translateX(${r.left - ind.parentNode.getBoundingClientRect().left}px)`; }
 }
 function animatePage() {
@@ -276,13 +281,14 @@ function render() {
 }
 function draw() {
   document.querySelectorAll('nav button').forEach(b => b.classList.toggle('on', b.dataset.v === view));
+  Object.assign($('#accBtn'), { hidden: !cloud(), textContent: me() ? me().name || 'račun' : 'prijava' });
   placeInd();
   const g = db.games.find(x => x.id === shownId) || active();
   $('#sheet').innerHTML = view === 'game' && pickDealer && g && winner(g) == null ? `<div class="backdrop" onclick="pickDealer=false;render()"></div>
     <div class="panel" role="dialog" aria-modal="true" aria-label="Tko miješa"><span class="grab"></span>
       <h2>Miješa: ${SEAT[pend]}</h2>${seats(pend)}
       <div class="row" style="margin-top:14px"><button class="btn" onclick="pickDealer=false;render()">Odustani</button><button class="btn main" onclick="setDealer(pend)">Potvrdi</button></div></div>` : '';
-  $('#app').innerHTML = view === 'players' ? playersView() : view === 'history' ? historyView() : view === 'tour' ? tourView() : g ? gameView(g) : newGameView();
+  $('#app').innerHTML = view === 'account' ? accountView() : view === 'players' ? playersView() : view === 'history' ? historyView() : view === 'tour' ? tourView() : g ? gameView(g) : newGameView();
   animatePage();
 }
 
@@ -568,43 +574,67 @@ function chartHover(e, svg) {
 }
 
 /* ---------- Igrači ---------- */
-function stats(pid) {
-  const s = { g: 0, w: 0, pts: 0, zv: 0, belot: 0, st: 0, pad: 0 };
-  for (const g of db.games) {
-    const t = g.teams.findIndex(tm => tm.includes(pid)), w = winner(g);
-    if (t < 0 || w == null) continue; // only finished games count
-    s.g++; if (w === t) s.w++; if (g.belot === t) s.belot++;
-    for (const h of g.hands) {
-      s.pts += h.score[t]; s.zv += zvOf(h, t);
-      if (h.stiglja === t) s.st++;
-      if (h.fell && h.caller === t) s.pad++;
-    }
+const blank = () => ({ g: 0, w: 0, pts: 0, zv: 0, belot: 0, st: 0, pad: 0 });
+// Everyone's stats in one pass over the games: { playerId: stats }. Only finished games count.
+function allStats(games = db.games) {
+  const out = {};
+  for (const g of games) {
+    const w = winner(g);
+    if (w == null) continue;
+    g.teams.forEach((tm, t) => tm.forEach(pid => {
+      const s = out[pid] ??= blank();
+      s.g++; if (w === t) s.w++; if (g.belot === t) s.belot++;
+      for (const h of g.hands) {
+        s.pts += h.score[t]; s.zv += zvOf(h, t);
+        if (h.stiglja === t) s.st++;
+        if (h.fell && h.caller === t) s.pad++;
+      }
+    }));
   }
-  return s;
+  return out;
 }
-let pq = ''; // Igrači: what's typed in the name field, also filters the list
+const statLines = s => `<div class="st">${s.g} igara · ${s.w} pobjeda${s.g ? ` (${Math.round(s.w / s.g * 100)}%)` : ''} · ${s.g - s.w} poraza · ${s.pts} bodova</div>
+      <div class="st">zvanja ${s.zv} · belot ${s.belot} · štiglje ${s.st} · padovi ${s.pad}</div>`;
+// Igrači: pq is what's typed in the name field (also filters the list); then sort, filter (at least pmin of pfilt) and page.
+let pq = '', psort = 'w', pdesc = true, pfilt = '', pmin = 1, ppage = 0, linkId = null;
+const PER = 20;
+const prows = () => { $('#pl').innerHTML = playerRows(); };
 function playersView() {
+  const opts = (list, cur) => list.map(([v, l]) => `<option value="${v}" ${v === cur ? 'selected' : ''}>${l}</option>`).join('');
   return `<h2>Igrači</h2>
     <form class="row" onsubmit="addPlayer(event)"><input id="pname" placeholder="Upiši ime ili traži…" maxlength="30" autocomplete="off" aria-label="Ime igrača ili traži"
-      value="${esc(pq)}" oninput="pq=this.value;$('#pl').innerHTML=playerRows()">
+      value="${esc(pq)}" oninput="pq=this.value;ppage=0;prows()">
     <button class="btn" style="flex:0 0 auto">Dodaj</button>
 </form>
+    <div class="row opts"><span class="muted small">Poredaj</span>
+      <select aria-label="Poredaj po" onchange="psort=this.value;pdesc=psort!=='name';ppage=0;render()">${opts([['w', 'pobjede'], ['pct', '% pobjeda'], ['g', 'igre'], ['pts', 'bodovi'], ['name', 'ime']], psort)}</select>
+      <button class="chip" onclick="pdesc=!pdesc;ppage=0;render()" aria-label="${pdesc ? 'Silazno' : 'Uzlazno'}, promijeni">${pdesc ? '↓' : '↑'}</button></div>
+    <div class="row opts"><span class="muted small">Prikaži</span>
+      <select aria-label="Prikaži" onchange="pfilt=this.value;ppage=0;render()">${opts([['', 'sve'], ['w', 'barem N pobjeda'], ['l', 'barem N poraza'], ['g', 'barem N igara'], ['pct', 'barem N % pobjeda']], pfilt)}</select>
+      ${pfilt ? `<input type="number" inputmode="numeric" min="0" value="${pmin}" aria-label="N" oninput="pmin=+this.value||0;ppage=0;prows()">` : ''}</div>
     <div id="pl">${playerRows()}</div>`;
 }
 function playerRows() {
-  const q = fold(pq.trim()), hit = p => fold(p.name).includes(q);
-  const head = p => `<div class="top"><span class="name">${esc(p.name)}</span><span style="flex:0 0 auto">
+  const q = fold(pq.trim()), hit = p => fold(p.name).includes(q), st = allStats();
+  const link = p => p.uid ? `<button class="chip on" onclick="unlink('${p.id}')" aria-label="Račun ${esc(p.acct)}, odspoji">☁ ${esc(p.acct)}</button>`
+    : me() && !p.guest ? `<button class="icon" onclick="linkId=linkId==='${p.id}'?null:'${p.id}';prows();$('#lname')?.focus()" aria-label="Poveži ${esc(p.name)} s računom">☁</button>` : '';
+  const head = p => `<div class="top"><span class="name">${esc(p.name)}</span><span style="flex:0 0 auto">${link(p)}
       <button class="icon" onclick="renamePlayer('${p.id}')" aria-label="Preimenuj ${esc(p.name)}">✎</button>
-      <button class="icon bad" onclick="delPlayer('${p.id}')" aria-label="Obriši ${esc(p.name)}">✕</button></span></div>`;
-  const guests = db.players.filter(p => p.guest && hit(p)).sort((a, b) => a.name.localeCompare(b.name, 'hr'))
-    .map(p => `<div class="line">${head(p)}<div class="st">statistika se ne prati</div></div>`).join('');
-  const list = db.players.filter(p => !p.guest && hit(p)).map(p => ({ p, s: stats(p.id) })).sort((a, b) => b.s.w - a.s.w).map(({ p, s }) => `
-    <div class="line">${head(p)}
-      <div class="st">${s.g} igara · ${s.w} pobjeda${s.g ? ` (${Math.round(s.w / s.g * 100)}%)` : ''} · ${s.pts} bodova</div>
-      <div class="st">zvanja ${s.zv} · belot ${s.belot} · štiglje ${s.st} · padovi ${s.pad}</div></div>`).join('');
+      <button class="icon bad" onclick="delPlayer('${p.id}')" aria-label="Obriši ${esc(p.name)}">✕</button></span></div>
+      ${linkId === p.id ? `<form class="row" onsubmit="linkPlayer(event,'${p.id}')"><input id="lname" placeholder="Korisničko ime računa" autocapitalize="none" autocomplete="off" aria-label="Korisničko ime računa">
+        <button class="btn" style="flex:0 0 auto">Poveži</button></form>` : ''}`;
+  const list = sortPlayers(db.players.filter(p => !p.guest && hit(p)).map(p => ({ p, s: st[p.id] ?? blank() })), { sort: psort, desc: pdesc, filter: pfilt, min: pmin });
+  if (!pfilt) list.push(...db.players.filter(p => p.guest && hit(p)).sort((a, b) => a.name.localeCompare(b.name, 'hr')).map(p => ({ p }))); // guests have no stats: last, and not when filtering
   if (!db.players.length) return fan('big') + '<p class="muted center">Još nema igrača.</p>';
-  if (!list && !guests) return `<p class="muted">Nema igrača „${esc(pq.trim())}”. Dodirni <u>Dodaj</u>.</p>`;
-  return `${list}${guests ? `<h2>Gosti</h2><p class="st" style="margin-top:-4px">Dodaju se na stranici Igra. Ne vodi im se statistika.</p>${guests}` : ''}`;
+  if (!list.length) return pfilt ? '<p class="muted">Nitko ne odgovara odabiru.</p>' : `<p class="muted">Nema igrača „${esc(pq.trim())}”. Dodirni <u>Dodaj</u>.</p>`;
+  const pages = Math.ceil(list.length / PER);
+  ppage = Math.min(ppage, pages - 1);
+  const shown = list.slice(ppage * PER, (ppage + 1) * PER);
+  const rows = shown.map(({ p, s }, i) => (p.guest && !shown[i - 1]?.p.guest ? '<h2>Gosti</h2><p class="st" style="margin-top:-4px">Dodaju se na stranici Igra. Ne vodi im se statistika.</p>' : '')
+    + `<div class="line">${head(p)}${s ? statLines(s) : '<div class="st">statistika se ne prati</div>'}</div>`).join('');
+  const turn = d => `ppage+=${d};prows();$('#pl').scrollIntoView()`;
+  return rows + (pages > 1 ? `<div class="row pager"><button class="btn" onclick="${turn(-1)}" ${ppage ? '' : 'disabled'} aria-label="Prethodna stranica">‹</button>
+    <span class="center">${ppage + 1} / ${pages}</span><button class="btn" onclick="${turn(1)}" ${ppage < pages - 1 ? '' : 'disabled'} aria-label="Sljedeća stranica">›</button></div>` : '');
 }
 const nameTaken = (n, except) => db.players.some(p => p.id !== except && p.name.toLowerCase() === n.toLowerCase());
 function addPlayer(e) {
@@ -979,12 +1009,175 @@ function importText(txt) {
   db = { players: d.players, games: d.games, tournaments: d.tournaments ?? [], theme: db.theme }; fixTours(); draft = null; tid = null; save(); render();
 }
 
+/* ---------- Račun ---------- */
+// Optional: the app works fully without an account. An account only adds the cloud: games with linked players go up,
+// and each player sees stats from every phone. Firebase over plain REST (no SDK: works offline and in the iOS app).
+// Setup in README; firestore.rules guards the data. The apiKey is public by design.
+const FB = { apiKey: 'AIzaSyALMHbKlj_rD_ECmq30VIJHiyHTbPSGsNs', project: 'belablok-eddb6' };
+const AKEY = 'belablok-auth'; // kept apart from db so it never ends up in a backup
+let acc = null;
+try { acc = JSON.parse(localStorage.getItem(AKEY)); } catch {}
+acc ??= { sent: {} }; // { uid, email, name, token, refresh, exp, sent: { gameId: hash of the copy in the cloud } }
+const saveAcc = () => localStorage.setItem(AKEY, JSON.stringify(acc));
+const cloud = () => !!FB.apiKey;
+const me = () => cloud() && acc.uid ? acc : null;
+const msg = e => e instanceof TypeError ? 'Nema veze s internetom.' : e.message;
+const ERR = { EMAIL_EXISTS: 'Taj e-mail već ima račun.', INVALID_LOGIN_CREDENTIALS: 'Pogrešan e-mail ili lozinka.', INVALID_PASSWORD: 'Pogrešan e-mail ili lozinka.',
+  EMAIL_NOT_FOUND: 'Nema računa s tim e-mailom.', INVALID_EMAIL: 'E-mail nije ispravan.', MISSING_EMAIL: 'Upiši e-mail.', MISSING_PASSWORD: 'Upiši lozinku.',
+  WEAK_PASSWORD: 'Lozinka mora imati barem 6 znakova.', TOO_MANY_ATTEMPTS_TRY_LATER: 'Previše pokušaja, pokušaj malo kasnije.' };
+async function call(url, opt) {
+  const r = await fetch(url, opt), d = await r.json().catch(() => ({}));
+  if (!r.ok) { const m = String(d.error?.message ?? ''); throw Object.assign(new Error(ERR[m.split(' ')[0]] || m || 'Greška ' + r.status), { status: r.status }); }
+  return d;
+}
+const idt = (path, body) => call(`https://identitytoolkit.googleapis.com/v1/accounts:${path}?key=${FB.apiKey}`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
+function signedIn(d) { // answer of signUp / signInWithPassword
+  acc = { ...acc, uid: d.localId, email: d.email, name: d.displayName || '', token: d.idToken, refresh: d.refreshToken, exp: Date.now() + d.expiresIn * 1000 };
+  saveAcc();
+}
+async function token() {
+  if (Date.now() > acc.exp - 60e3) {
+    let d;
+    try { d = await call(`https://securetoken.googleapis.com/v1/token?key=${FB.apiKey}`, { method: 'POST', body: new URLSearchParams({ grant_type: 'refresh_token', refresh_token: acc.refresh }) }); }
+    catch (e) { if (e.status === 400) { logout(); e.message = 'Prijava je istekla, prijavi se ponovno.'; } throw e; }
+    Object.assign(acc, { token: d.id_token, refresh: d.refresh_token, exp: Date.now() + d.expires_in * 1000 }); saveAcc();
+  }
+  return acc.token;
+}
+// Firestore REST: values are typed; we only use strings, integers and lists of those.
+const val = v => typeof v === 'number' ? { integerValue: String(v) } : Array.isArray(v) ? { arrayValue: { values: v.map(val) } } : { stringValue: v };
+const unval = f => f.stringValue ?? (f.integerValue != null ? +f.integerValue : (f.arrayValue?.values ?? []).map(unval));
+const fields = o => ({ fields: Object.fromEntries(Object.entries(o).map(([k, v]) => [k, val(v)])) });
+const fs = async (method, path, body) => call(`https://firestore.googleapis.com/v1/projects/${FB.project}/databases/(default)/documents${path}`,
+  { method, headers: { Authorization: 'Bearer ' + await token(), 'Content-Type': 'application/json' }, body: body && JSON.stringify(body) });
+
+const nameOk = n => /^[a-z0-9_.]{3,20}$/i.test(n);
+const NAME_RULE = 'Korisničko ime: 3–20 slova (bez kvačica), brojki, _ ili .';
+async function setName(name) {
+  if (!nameOk(name)) throw new Error(NAME_RULE);
+  try { await fs('POST', '/usernames?documentId=' + name.toLowerCase(), fields({ uid: acc.uid, name })); }
+  catch (e) { throw e.status === 409 ? new Error('To korisničko ime je zauzeto.') : e; }
+  await idt('update', { idToken: await token(), displayName: name }); // so logging in on another phone brings the name back
+  acc.name = name; saveAcc();
+}
+function logout() { acc = { sent: {} }; saveAcc(); linkId = null; render(); }
+
+// Uploads every finished game that has a linked player. A game counts as sent only once the write succeeded, so anything
+// missed offline goes up on the next save, start or 'online'. Unlinked players are stored as "x".
+// shortcut: sent is per phone, so a second account logging in here uploads the same games again; fine for one scorer per phone.
+let syncing = false, again = false;
+const hash = s => { let h = 0; for (let i = 0; i < s.length; i++) h = h * 31 + s.charCodeAt(i) | 0; return h.toString(36); };
+async function sync() {
+  if (!me()) return;
+  if (syncing) { again = true; return; }
+  syncing = true;
+  try {
+    const want = {};
+    for (const g of db.games) {
+      const teams = g.teams.map(t => t.map(id => db.players.find(p => p.id === id)?.uid || 'x'));
+      const uids = [...new Set(teams.flat())].filter(u => u !== 'x');
+      if (winner(g) != null && uids.length) want[g.id] = { by: acc.uid, date: g.date, uids, g: JSON.stringify({ id: g.id, date: g.date, target: g.target, belot: g.belot, teams, hands: g.hands }) };
+    }
+    for (const id of new Set([...Object.keys(want), ...Object.keys(acc.sent)])) {
+      const d = want[id], h = d ? hash(d.g) : undefined;
+      if (h === acc.sent[id]) continue;
+      try { await fs(d ? 'PATCH' : 'DELETE', `/games/${acc.uid}_${id}`, d && fields(d)); }
+      catch (e) { if (!e.status) throw e; console.warn('sync', id, e); continue; } // offline: stop; refused game: skip it, try again next time
+      if (d) acc.sent[id] = h; else delete acc.sent[id];
+      saveAcc();
+    }
+  } catch (e) { console.warn('sync', e); }
+  finally { syncing = false; if (again) { again = false; sync(); } }
+}
+
+// Račun page. af keeps what was typed when the page redraws (not the password).
+let accTab = 'login', accErr = '', mine = null;
+const af = { email: '', name: '' };
+async function loadMine() { // every game with me in it, from any phone
+  mine = 'load';
+  try {
+    const res = await fs('POST', ':runQuery', { structuredQuery: { from: [{ collectionId: 'games' }],
+      where: { fieldFilter: { field: { fieldPath: 'uids' }, op: 'ARRAY_CONTAINS', value: { stringValue: acc.uid } } } } });
+    const games = res.filter(r => r.document?.fields?.g).map(r => { try { return JSON.parse(unval(r.document.fields.g)); } catch { return null; } })
+      .filter(g => g && validBackup({ players: [], games: [g] })); // other people's data goes into the page: check it first
+    mine = allStats(games)[acc.uid] ?? blank();
+  } catch (e) { mine = { err: msg(e) }; }
+  if (view === 'account') render();
+}
+function accountView() {
+  const u = me(), err = accErr ? `<p class="bad" role="alert">${esc(accErr)}</p>` : '';
+  accErr = '';
+  const field = (id, label, type, extra = '') => `<span class="lbl">${label}</span><input id="${id}" type="${type}" ${extra} aria-label="${label}">`;
+  const nameField = () => field('aname', 'Korisničko ime', 'text', `value="${esc(af.name)}" oninput="af.name=this.value" maxlength="20" autocapitalize="none" autocomplete="username"`);
+  if (u && !u.name) return `<h2>Odaberi korisničko ime</h2><p class="st">Po njemu te drugi povezuju sa svojim igračem. ${NAME_RULE}</p>
+    <form onsubmit="accName(event)">${nameField()}${err}
+      <button class="btn main wide" style="width:100%;margin-top:16px">Spremi</button></form>
+    <button class="link" onclick="logout()">Odjava</button>`;
+  if (u) {
+    if (mine == null) loadMine();
+    return `<h2>${esc(u.name)}</h2><p class="st" style="margin-top:-6px">${esc(u.email)}</p>
+      <div class="hhead"><h2>Moja statistika</h2><button class="link" onclick="loadMine();render()">osvježi</button></div>
+      <p class="st" style="margin-top:-4px">Sve završene igre u kojima je tvoj igrač povezan s ovim računom, s bilo kojeg mobitela.</p>
+      <div class="line">${mine === 'load' ? '<p class="muted">Učitavam…</p>' : mine.err ? `<p class="bad">${esc(mine.err)}</p>` : statLines(mine)}</div>
+      <p class="st">Na stranici Igrači dodirni ☁ uz igrača i upiši njegovo korisničko ime: njegove igre s ovog mobitela ulaze u njegovu statistiku.</p>
+      <button class="btn wide" style="width:100%;margin-top:16px" onclick="logout()">Odjava</button>`;
+  }
+  const reg = accTab === 'reg';
+  return `<h2>Račun</h2><p class="st">Nije obavezan, sve radi i bez njega. S računom tvoje igre s bilo kojeg mobitela ulaze u tvoju statistiku.</p>
+    <div class="row pick" style="margin:10px 0 4px">${[['login', 'Prijava'], ['reg', 'Registracija']].map(([k, l]) =>
+      `<label><input type="radio" name="atab" ${accTab === k ? 'checked' : ''} onchange="accTab='${k}';render()"><span>${l}</span></label>`).join('')}</div>
+    <form onsubmit="accSubmit(event)">
+      ${field('aemail', 'E-mail', 'email', `value="${esc(af.email)}" oninput="af.email=this.value" autocomplete="email" autocapitalize="none"`)}
+      ${field('apw', 'Lozinka', 'password', `autocomplete="${reg ? 'new-password' : 'current-password'}"`)}
+      ${reg ? nameField() + `<p class="st">${NAME_RULE}</p>` : ''}
+      ${err}<button class="btn main wide" style="width:100%;margin-top:16px">${reg ? 'Napravi račun' : 'Prijavi se'}</button></form>
+    ${reg ? '' : '<button class="link" onclick="resetPw()">Zaboravljena lozinka?</button>'}`;
+}
+async function busy(e, work) { // disables the form while it talks to the server; shows any error on the page
+  e?.preventDefault();
+  e?.target.querySelector('button')?.setAttribute('disabled', '');
+  try { await work(); } catch (err) { accErr = msg(err); }
+  render();
+}
+const accSubmit = e => busy(e, async () => {
+  const email = af.email.trim(), password = $('#apw').value;
+  if (accTab === 'reg' && !nameOk(af.name.trim())) throw new Error(NAME_RULE); // before the account exists
+  signedIn(await idt(accTab === 'reg' ? 'signUp' : 'signInWithPassword', { email, password, returnSecureToken: true }));
+  mine = null;
+  if (accTab === 'reg') await setName(af.name.trim()); // if the name is taken, the page asks for another one
+  sync();
+});
+const accName = e => busy(e, async () => { await setName(af.name.trim()); sync(); });
+const resetPw = () => busy(null, async () => {
+  await idt('sendOobCode', { requestType: 'PASSWORD_RESET', email: af.email.trim() });
+  alert('Poslali smo e-mail za novu lozinku.');
+});
+async function linkPlayer(e, id) {
+  e.preventDefault();
+  const n = $('#lname').value.trim(), b = e.target.querySelector('button');
+  if (!nameOk(n)) return alert(NAME_RULE);
+  b.disabled = true;
+  try {
+    const d = await fs('GET', '/usernames/' + n.toLowerCase()), uid = unval(d.fields.uid), other = db.players.find(x => x.uid === uid && x.id !== id);
+    if (other) throw new Error(`Taj račun je već povezan s igračem ${other.name}.`);
+    Object.assign(db.players.find(x => x.id === id), { uid, acct: unval(d.fields.name) });
+    linkId = null; save();
+  } catch (err) { alert(err.status === 404 ? `Nema računa „${n}”.` : msg(err)); }
+  prows();
+}
+function unlink(id) {
+  const p = db.players.find(x => x.id === id);
+  if (!confirm(`Odspojiti ${p.name} od računa ${p.acct}? Igre s ovog mobitela više mu se neće brojati.`)) return;
+  delete p.uid; delete p.acct; save(); prows();
+}
+
 $('#hfan').innerHTML = fan();
 document.querySelectorAll('nav i[data-s]').forEach(e => e.innerHTML = SUIT[e.dataset.s]);
 applyTheme(); render();
 // keep the dealing animation up a little while on start (long enough for one card to fall and come back), then fade out
 setTimeout(() => { $('#loader').classList.add('out'); setTimeout(() => $('#loader').remove(), 300); }, Math.max(0, 1300 - performance.now()));
 addEventListener('resize', placeInd);
+sync(); addEventListener('online', sync); // upload anything left over from offline
 addEventListener('keydown', e => { if (e.key === 'Escape' && pickDealer) { pickDealer = false; render(); } }); document.fonts?.ready.then(placeInd);
 if ('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js').catch(() => {});
 navigator.storage?.persist?.().catch(() => {}); // ask iOS not to clear players and games when space runs low

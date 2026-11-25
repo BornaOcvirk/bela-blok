@@ -53,4 +53,13 @@ assert.deepStrictEqual(liveWins(T(3, { '0-1': 1, '1-0': 2, '5-5': 1 })), { '0-1'
   assert.strictEqual(champion(t, { 2: 50 }), 2);
   assert.deepStrictEqual(standings(t).map(r => r.w), [1, 1, 1]);
   assert.strictEqual(champion({ ...t, wins: { '0:1': 0 } }), null); }               // not all played yet
+const { sortPlayers } = require('./docs/bela.js');
+{ const r = (name, g, w, pts = 0) => ({ p: { name }, s: { g, w, pts } }), rows = [r('Ivo', 4, 1), r('Ana', 2, 2), r('Šime', 0, 0), r('Bero', 4, 3)];
+  const names = o => sortPlayers(rows, o).map(x => x.p.name).join();
+  assert.strictEqual(names({}), 'Bero,Ana,Ivo,Šime');                          // most wins first
+  assert.strictEqual(names({ sort: 'pct' }), 'Ana,Bero,Ivo,Šime');
+  assert.strictEqual(names({ sort: 'g' }), 'Bero,Ivo,Ana,Šime');              // tie on games -> by name
+  assert.strictEqual(names({ sort: 'name', desc: false }), 'Ana,Bero,Ivo,Šime');
+  assert.strictEqual(names({ filter: 'l', min: 1 }), 'Bero,Ivo');              // at least 1 loss
+  assert.strictEqual(names({ filter: 'pct', min: 75 }), 'Bero,Ana'); }
 console.log('ok');

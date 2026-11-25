@@ -114,4 +114,13 @@ function liveWins(t) {
   return out;
 }
 
-if (typeof module !== 'undefined') module.exports = { scoreHand, totals, winner, validBackup, bracket, seedOrder, thirdPlace, roundRobin, matchList, standings, champion, liveWins, HAND };
+// Igrači list: rows are { p: player, s: stats }. Keeps rows with at least `min` of the `filter` stat, sorted by `sort`
+// (ties by name). Stats: w wins, l losses, g games, pct win %, pts points.
+const STAT = { w: s => s.w, l: s => s.g - s.w, g: s => s.g, pct: s => s.g ? s.w / s.g * 100 : 0, pts: s => s.pts };
+function sortPlayers(rows, { sort = 'w', desc = true, filter = '', min = 0 } = {}) {
+  const byName = (a, b) => a.p.name.localeCompare(b.p.name, 'hr');
+  const cmp = (a, b) => sort === 'name' ? byName(a, b) : STAT[sort](a.s) - STAT[sort](b.s);
+  return rows.filter(r => !STAT[filter] || STAT[filter](r.s) >= min).sort((a, b) => (desc ? -cmp(a, b) : cmp(a, b)) || byName(a, b));
+}
+
+if (typeof module !== 'undefined') module.exports = { scoreHand, totals, winner, validBackup, bracket, seedOrder, thirdPlace, roundRobin, matchList, standings, champion, liveWins, sortPlayers, HAND };

@@ -21,6 +21,22 @@ igrači koji se miješaju u parove i statistika po igraču. Svijetla i tamna tem
 2. Na iPhoneu u Safariju otvori `https://bornaocvirk.github.io/bela-blok/`.
 3. **Dijeli → Dodaj na početni zaslon**. Radi i bez interneta, ne istječe.
 
+## Račun (nije obavezan)
+Sve radi i bez računa. Račun samo dodaje oblak: tko se registrira, dobije korisničko ime, a kad ga netko na svom
+mobitelu poveže s igračem (**Igrači → ☁ → korisničko ime**), završene igre tog igrača šalju se u oblak.
+U **prijava / ime** (gore lijevo) svatko vidi svoju statistiku iz igara sa svih mobitela.
+Igre odigrane bez interneta pošalju se same kad se veza vrati. Za slanje igara mora biti prijavljen onaj tko vodi zapisnik.
+
+### Postavljanje (jednom, besplatno)
+1. [console.firebase.google.com](https://console.firebase.google.com) → **Create project** (Analytics nije potreban).
+2. **Build → Authentication → Get started → Email/Password → Enable**.
+3. **Build → Firestore Database → Create database** (production mode, bilo koja lokacija u EU).
+4. **Firestore → Rules**: zalijepi sadržaj datoteke `firestore.rules` → **Publish**.
+5. **Project settings → General → Your apps → Web (</>)**: registriraj app pa kopiraj `apiKey` i `projectId`
+   u `const FB = { apiKey: '…', project: '…' }` u `docs/index.html`. (apiKey je javan po dizajnu; podatke štite pravila.)
+
+Dok je `apiKey` prazan, aplikacija ne prikazuje ništa vezano uz račune.
+
 ## Sigurnosna kopija
 Podaci su samo na mobitelu. **Povijest → Sigurnosna kopija → Izvezi** povremeno.
 
