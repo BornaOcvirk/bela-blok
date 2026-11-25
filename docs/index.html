@@ -286,7 +286,7 @@ function draw() {
   placeInd();
   const g = db.games.find(x => x.id === shownId) || active();
   $('#sheet').innerHTML = view === 'players' && fopen ? `<div class="backdrop" onclick="fopen=false;render()"></div>
-    <div class="panel" role="dialog" aria-modal="true" aria-label="Poredaj i filtriraj"><span class="grab"></span><div id="fp">${fpanel()}</div></div>`
+    <div class="panel" role="dialog" aria-modal="true" aria-label="${fopen === 'sort' ? 'Poredaj' : 'Filteri'}"><span class="grab"></span><div id="fp">${fpanel()}</div></div>`
     : view === 'game' && pickDealer && g && winner(g) == null ? `<div class="backdrop" onclick="pickDealer=false;render()"></div>
     <div class="panel" role="dialog" aria-modal="true" aria-label="Tko miješa"><span class="grab"></span>
       <h2>Miješa: ${SEAT[pend]}</h2>${seats(pend)}
@@ -598,7 +598,8 @@ function allStats(games = db.games) {
 }
 const statLines = s => `<div class="st">${s.g} igara · ${s.w} pobjeda${s.g ? ` (${Math.round(s.w / s.g * 100)}%)` : ''} · ${s.g - s.w} poraza · ${s.pts} bodova</div>
       <div class="st">zvanja ${s.zv} · belot ${s.belot} · štiglje ${s.st} · padovi ${s.pad}</div>`;
-// Igrači: pq is what's typed in the name field (also filters the list); pf is the sort and filter (sortPlayers options), set in a slide-up panel.
+// Igrači: pq is what's typed in the name field (also filters the list); pf is the sort and filter (sortPlayers options),
+// each set in its own slide-up panel (fopen: 'sort' | 'filter' | false).
 let pq = '', pf = { sort: 'w', desc: true, filter: '', min: 1 }, fopen = false, ppage = 0, linkId = null;
 const PER = 8;
 const prows = () => { $('#pl').innerHTML = playerRows(); };
@@ -608,20 +609,20 @@ const FUNNEL = '<svg viewBox="0 0 24 24" aria-hidden="true"><path fill="none" st
 const fsum = () => pf.filter === 'pct' ? `${pf.min} %+ pobjeda` : `${pf.min}+ ${{ w: 'pobjeda', l: 'poraza', g: 'igara' }[pf.filter]}`;
 function ptools() {
   const sl = SORTS.find(x => x[0] === pf.sort)[1].toLowerCase();
-  return `<button class="chip" onclick="fopen=true;render()" aria-label="Poredano po: ${sl}, ${pf.desc ? 'silazno' : 'uzlazno'}. Promijeni">⇅ ${sl} ${pf.desc ? '↓' : '↑'}</button>
-    <button class="chip ${pf.filter ? 'on' : ''}" onclick="fopen=true;render()">${FUNNEL}Filteri${pf.filter ? ' · ' + fsum() : ''}</button>`;
+  return `<button class="chip" onclick="fopen='sort';render()" aria-label="Poredano po: ${sl}, ${pf.desc ? 'silazno' : 'uzlazno'}. Promijeni">⇅ ${sl} ${pf.desc ? '↓' : '↑'}</button>
+    <button class="chip ${pf.filter ? 'on' : ''}" onclick="fopen='filter';render()">${FUNNEL}Filteri${pf.filter ? ' · ' + fsum() : ''}</button>`;
 }
-// Inside of the sort/filter panel. Taps redraw only this, the toolbar and the list, so the panel doesn't slide in again.
+// Inside of the sort or filter panel. Taps redraw only this, the toolbar and the list, so the panel doesn't slide in again.
 function fpanel() {
   const b = (on, click, label) => `<button class="btn ${on ? 'on' : ''}" aria-pressed="${on}" onclick="${click}">${label}</button>`;
   const dir = pf.sort === 'name' ? (pf.desc ? 'Ž → A' : 'A → Ž') : pf.desc ? '↓ Najviše prvo' : '↑ Najmanje prvo';
   const step = pf.filter === 'pct' ? 10 : 1;
-  return `<h2>Poredaj po</h2><div class="grid3">${SORTS.map(([k, l]) => b(pf.sort === k, `setF({sort:'${k}',desc:${k !== 'name'}})`, l)).join('')}</div>
-    <button class="btn" style="width:100%;margin-top:8px" onclick="setF({desc:${!pf.desc}})">${dir}</button>
-    <h2>Prikaži samo</h2><div class="grid3">${FILTS.map(([k, l]) => b(pf.filter === k, `setF({filter:'${k}'})`, l)).join('')}</div>
+  const done = `<button class="btn main wide" style="width:100%;margin-top:18px" onclick="fopen=false;render()">Gotovo</button>`;
+  if (fopen === 'sort') return `<h2>Poredaj po</h2><div class="grid3">${SORTS.map(([k, l]) => b(pf.sort === k, `setF({sort:'${k}',desc:${k !== 'name'}})`, l)).join('')}</div>
+    <button class="btn" style="width:100%;margin-top:8px" onclick="setF({desc:${!pf.desc}})">${dir}</button>${done}`;
+  return `<h2>Filteri</h2><p class="st" style="margin-top:-4px">Prikaži samo igrače s barem N…</p><div class="grid3">${FILTS.map(([k, l]) => b(pf.filter === k, `setF({filter:'${k}'})`, l)).join('')}</div>
     ${pf.filter ? `<div class="row stepper"><span>barem</span><button class="btn" onclick="setF({min:${Math.max(0, pf.min - step)}})" aria-label="Manje">−</button>
-      <b aria-live="polite">${pf.min}${pf.filter === 'pct' ? ' %' : ''}</b><button class="btn" onclick="setF({min:${pf.min + step}})" aria-label="Više">+</button></div>` : ''}
-    <button class="btn main wide" style="width:100%;margin-top:18px" onclick="fopen=false;render()">Gotovo</button>`;
+      <b aria-live="polite">${pf.min}${pf.filter === 'pct' ? ' %' : ''}</b><button class="btn" onclick="setF({min:${pf.min + step}})" aria-label="Više">+</button></div>` : ''}${done}`;
 }
 function setF(o) { Object.assign(pf, o); ppage = 0; $('#fp').innerHTML = fpanel(); $('#ptools').innerHTML = ptools(); prows(); }
 function playersView() {
