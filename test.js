@@ -15,6 +15,8 @@ assert.strictEqual(winner(g([[900, 100]])), null);
 assert.strictEqual(winner(g([[900, 100], [120, 42]])), 0);
 assert.strictEqual(winner(g([[900, 950], [150, 100]])), null); // both over, tied -> keep playing
 assert.strictEqual(winner(g([[10, 0]], 1)), 1);                // belot wins instantly
+const { firstDealer } = require('./docs/bela.js');
+[[0, 0, 0], [1, 0, 2], [3, 0, 0], [1, 1, 1], [2, 1, 3], [0, 1, 1]].forEach(([n, w, d]) => assert.strictEqual(firstDealer(n, w), d));
 const { validBackup } = require('./docs/bela.js');
 const hand = { caller: 0, score: [100, 62], zv: [[20], []], bela: [0, 1], stiglja: null };
 const backup = { players: [{ id: 'a1', name: 'Ana' }], games: [{ id: 'g1', target: 1001, belot: null, teams: [['a1', 'b'], ['c', 'd']], hands: [hand] }] };

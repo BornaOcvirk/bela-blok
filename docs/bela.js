@@ -26,6 +26,9 @@ function winner(game) {
   return a > b ? 0 : 1;
 }
 
+// New game: rotation carries on, but the first dealer must be on the team that just won (seats 0,2 = MI, 1,3 = VI).
+const firstDealer = (next, w) => next % 2 === w ? next : (next + 1) % 4;
+
 // Checks an imported backup before it replaces the data. Ids go into onclick attributes, so they must be plain.
 const isId = v => typeof v === 'string' && /^[a-z0-9]+$/i.test(v);
 const isPair = a => Array.isArray(a) && a.length === 2;
@@ -123,4 +126,4 @@ function sortPlayers(rows, { sort = 'w', desc = true, filter = '', min = 0 } = {
   return rows.filter(r => !STAT[filter] || STAT[filter](r.s) >= min).sort((a, b) => (desc ? -cmp(a, b) : cmp(a, b)) || byName(a, b));
 }
 
-if (typeof module !== 'undefined') module.exports = { scoreHand, totals, winner, validBackup, bracket, seedOrder, thirdPlace, roundRobin, matchList, standings, champion, liveWins, sortPlayers, HAND };
+if (typeof module !== 'undefined') module.exports = { scoreHand, totals, winner, firstDealer, validBackup, bracket, seedOrder, thirdPlace, roundRobin, matchList, standings, champion, liveWins, sortPlayers, HAND };
