@@ -636,7 +636,10 @@ function playersView() {
 }
 function playerRows() {
   const q = fold(pq.trim()), hit = p => fold(p.name).includes(q), st = allStats();
-  const link = p => p.uid ? `<button class="chip on" onclick="unlink('${p.id}')" aria-label="Račun ${esc(p.acct)}, odspoji">☁ ${p.uid === acc.uid ? 'ti' : esc(p.acct)}</button>`
+  // Only the account's owner can undo a link (their chip says "ti"); everyone else sees it but can't remove it.
+  const link = p => p.uid && p.uid === acc.uid ? `<button class="chip on" onclick="unlink('${p.id}')" aria-label="Tvoj račun, odspoji">☁ ti</button>`
+    : p.uid ? `<span class="chip on" style="cursor:default" aria-label="Povezan s računom ${esc(p.acct)}">☁ ${esc(p.acct)}</span>`
+    : me() && sugg.has(p.id) ? `<button class="chip" onclick="takeSugg('${p.id}')" aria-label="Je li ${esc(p.name)} korisnik ${esc(sugg.get(p.id).acct)}? Potvrdi">☁ ${esc(sugg.get(p.id).acct)}?</button>`
     : me() && !p.guest ? `<button class="icon" onclick="linkId=linkId==='${p.id}'?null:'${p.id}';prows();$('#lname')?.focus()" aria-label="Poveži ${esc(p.name)} s računom">☁</button>` : '';
   const head = p => `<div class="top"><span class="name">${esc(p.name)}</span><span style="flex:0 0 auto">${link(p)}
       <button class="icon" onclick="renamePlayer('${p.id}')" aria-label="Preimenuj ${esc(p.name)}">✎</button>
@@ -668,7 +671,7 @@ function renamePlayer(id) {
   const p = db.players.find(x => x.id === id), n = prompt('Novo ime:', p.name)?.trim();
   if (!n) return;
   if (nameTaken(n, id)) return alert('Igrač s tim imenom već postoji.');
-  p.name = n; save(); render(); autoLink().catch(() => {});
+  p.name = n; delete p.noAuto; sugg.delete(id); save(); render(); autoLink().catch(() => {}); // new name, new suggestion
 }
 function delPlayer(id) {
   if (db.games.some(g => g.teams.flat().includes(id))) return alert('Igrač ima odigrane igre pa se ne može obrisati (statistika bi se izgubila).');
@@ -1133,21 +1136,30 @@ async function pull() {
   } catch (e) { console.warn('pull', e); }
   finally { pulling = false; }
 }
-// A player named like an account's username is linked to it on its own (unless it was unlinked by hand: noAuto).
-const noAcct = new Set(); // names looked up this session that have no account free to link
+// A player named like an account's username gets a suggestion chip ("☁ ana?"), and one tap confirms it is that person.
+// Never linked silently: two different people can share a name. noAuto = suggestion turned down (or link undone).
+const noAcct = new Set(), sugg = new Map(); // names with no account free to link; player id -> { uid, acct }
 async function autoLink() {
   if (!me()) return;
   let n = 0;
   for (const p of db.players) {
     const k = p.name.trim().toLowerCase();
-    if (p.uid || p.guest || p.noAuto || !nameOk(k) || noAcct.has(k)) continue;
+    if (p.uid || p.guest || p.noAuto || sugg.has(p.id) || !nameOk(k) || noAcct.has(k)) continue;
     try {
       const d = await fs('GET', '/usernames/' + k), u = unval(d.fields.uid);
       if (db.players.some(x => x.uid === u)) noAcct.add(k);
-      else { Object.assign(p, { uid: u, acct: unval(d.fields.name) }); n++; }
+      else { sugg.set(p.id, { uid: u, acct: unval(d.fields.name) }); n++; }
     } catch (e) { if (e.status === 404) noAcct.add(k); else if (!e.status) throw e; }
   }
-  if (n) { save(); render(); } // save uploads that player's games right away
+  if (n) render();
+}
+function takeSugg(id) {
+  const p = db.players.find(x => x.id === id), s = sugg.get(id);
+  sugg.delete(id);
+  if (db.players.some(x => x.uid === s.uid)) return prows(); // that account got linked to someone else meanwhile
+  if (confirm(`Je li ${p.name} korisnik ${s.acct}? Tada igre tog igrača s ovog mobitela ulaze u statistiku i povijest tog računa.`)) Object.assign(p, s);
+  else p.noAuto = true; // don't suggest again; ☁ still links by hand
+  save(); prows(); // save uploads that player's games right away
 }
 
 // Račun page. af keeps what was typed when the page redraws (not the password).
@@ -1179,7 +1191,7 @@ function accountView() {
       <div class="hhead"><h2>Moja statistika</h2><button class="link" onclick="loadMine();render()">osvježi</button></div>
       <p class="st" style="margin-top:-4px">Sve završene igre u kojima je tvoj igrač povezan s ovim računom, s bilo kojeg mobitela. Igre s tuđih mobitela stižu i u tvoju Povijest.</p>
       <div class="line">${mine === 'load' ? '<p class="muted">Učitavam…</p>' : mine.err ? `<p class="bad">${esc(mine.err)}</p>` : statLines(mine)}</div>
-      <p class="st">Na stranici Igrači dodirni ☁ uz igrača i upiši njegovo korisničko ime: njegove igre s ovog mobitela ulaze u njegovu statistiku i povijest. Igrač s istim imenom kao nečije korisničko ime poveže se sam.</p>
+      <p class="st">Na stranici Igrači dodirni ☁ uz igrača i upiši njegovo korisničko ime: njegove igre s ovog mobitela ulaze u njegovu statistiku i povijest. Igrač s istim imenom kao nečije korisničko ime dobije prijedlog ☁ ime? – dodirni ga da potvrdiš da je to ta osoba.</p>
       <button class="btn wide" style="width:100%;margin-top:16px" onclick="logout()">Odjava</button>
       <details class="day" style="margin-top:20px"><summary class="bad">Obriši račun</summary>
         <p class="st">Briše račun, korisničko ime i sve igre koje si poslao u oblak. Igre i igrači na ovom mobitelu ostaju. Ne može se poništiti.</p>
@@ -1256,7 +1268,8 @@ async function linkPlayer(e, id) {
 }
 function unlink(id) {
   const p = db.players.find(x => x.id === id);
-  if (!confirm(`Odspojiti ${p.name} od računa ${p.acct}? Igre s ovog mobitela više mu se neće brojati.`)) return;
+  if (!me() || p.uid !== acc.uid) return; // only your own link
+  if (!confirm(`Odspojiti svoj račun od igrača ${p.name}? Igre s ovog mobitela više ti se neće brojati.`)) return;
   delete p.uid; delete p.acct; p.noAuto = true; save(); prows(); // noAuto: autoLink must not link it again
 }
 
