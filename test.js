@@ -64,4 +64,28 @@ const { sortPlayers } = require('./docs/bela.js');
   assert.strictEqual(names({ sort: 'name', desc: false }), 'Ana,Bero,Ivo,Šime');
   assert.strictEqual(names({ filter: 'l', min: 1 }), 'Bero,Ivo');              // at least 1 loss
   assert.strictEqual(names({ filter: 'pct', min: 75 }), 'Bero,Ana'); }
+
+{ // games from other phones: me, a linked player, a same-name player and a stranger; then edit, delete, drop
+  const { mergeCloud } = require('./docs/bela.js');
+  let n = 0; const newId = () => 'n' + n++;
+  const me = { uid: 'ME', name: 'borna' };
+  const db = { players: [{ id: 'p1', name: 'Borna' }, { id: 'p2', name: 'Ana', uid: 'ANA' }, { id: 'p3', name: 'Ivo' }], games: [] };
+  const g = { id: 'g1', date: 1, target: 1001, belot: null, hands: [{ caller: 0, score: [600, 400], zv: [[], []], bela: [0, 0], stiglja: null }],
+    teams: [['ME', 'ANA'], ['x', 'x']], names: [['B', 'A'], ['ivo', 'Marko']] };
+  const doc = { by: 'SC', g };
+  assert.ok(mergeCloud(db, [doc, { by: 'ME', g: { ...g, id: 'own' } }], me, newId));
+  assert.deepStrictEqual(db.games.map(x => [x.id, x.from, x.teams]), [['SCg1', 'SC', [['p1', 'p2'], ['p3', 'n0']]]]); // own game ignored
+  assert.deepStrictEqual(db.players[0], { id: 'p1', name: 'Borna', uid: 'ME', acct: 'borna' });                      // my player gets linked
+  assert.deepStrictEqual(db.players[3], { id: 'n0', name: 'Marko', guest: true });
+  assert.ok(!mergeCloud(db, [doc], me, newId));                                                                  // nothing new
+  assert.ok(mergeCloud(db, [{ by: 'SC', g: { ...g, hands: [{ ...g.hands[0], score: [700, 400] }] } }], me, newId));            // scorer edited it
+  assert.strictEqual(db.games[0].hands[0].score[0], 700);
+  assert.strictEqual(db.players.length, 4);                                                                      // same people reused
+  assert.ok(mergeCloud(db, [], me, newId) && db.games.length === 0);                                             // scorer deleted it
+  assert.ok(!mergeCloud(db, [doc], { ...me, drop: ['SCg1'] }, newId) && db.games.length === 0);                  // deleted here: stays out
+  const fresh = { players: [], games: [] };
+  mergeCloud(fresh, [doc], me, newId);                                                                           // no player of mine yet
+  assert.deepStrictEqual(fresh.players[0], { id: 'n1', name: 'borna', uid: 'ME', acct: 'borna' });
+  assert.ok(require('./docs/bela.js').validBackup(fresh));
+}
 console.log('ok');

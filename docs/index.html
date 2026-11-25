@@ -636,7 +636,7 @@ function playersView() {
 }
 function playerRows() {
   const q = fold(pq.trim()), hit = p => fold(p.name).includes(q), st = allStats();
-  const link = p => p.uid ? `<button class="chip on" onclick="unlink('${p.id}')" aria-label="Račun ${esc(p.acct)}, odspoji">☁ ${esc(p.acct)}</button>`
+  const link = p => p.uid ? `<button class="chip on" onclick="unlink('${p.id}')" aria-label="Račun ${esc(p.acct)}, odspoji">☁ ${p.uid === acc.uid ? 'ti' : esc(p.acct)}</button>`
     : me() && !p.guest ? `<button class="icon" onclick="linkId=linkId==='${p.id}'?null:'${p.id}';prows();$('#lname')?.focus()" aria-label="Poveži ${esc(p.name)} s računom">☁</button>` : '';
   const head = p => `<div class="top"><span class="name">${esc(p.name)}</span><span style="flex:0 0 auto">${link(p)}
       <button class="icon" onclick="renamePlayer('${p.id}')" aria-label="Preimenuj ${esc(p.name)}">✎</button>
@@ -662,13 +662,13 @@ function addPlayer(e) {
   const n = $('#pname').value.trim();
   if (!n) return;
   if (nameTaken(n)) return alert('Igrač s tim imenom već postoji.');
-  db.players.push({ id: uid(), name: n }); pq = ''; save(); render(); $('#pname').focus();
+  db.players.push({ id: uid(), name: n }); pq = ''; save(); render(); $('#pname').focus(); autoLink().catch(() => {});
 }
 function renamePlayer(id) {
   const p = db.players.find(x => x.id === id), n = prompt('Novo ime:', p.name)?.trim();
   if (!n) return;
   if (nameTaken(n, id)) return alert('Igrač s tim imenom već postoji.');
-  p.name = n; save(); render();
+  p.name = n; save(); render(); autoLink().catch(() => {});
 }
 function delPlayer(id) {
   if (db.games.some(g => g.teams.flat().includes(id))) return alert('Igrač ima odigrane igre pa se ne može obrisati (statistika bi se izgubila).');
@@ -1001,7 +1001,8 @@ function toggleAllDays() {
   const keys = [...new Set(db.games.map(g => new Date(g.date).toDateString()))];
   openDays = keys.every(k => openDays.has(k)) ? new Set() : new Set(keys); render();
 }
-function delGame(id) { if (confirm('Obrisati igru iz povijesti? Statistika igrača će se promijeniti.')) { db.games = db.games.filter(g => g.id !== id); histId = null; draft = null; save(); render(); } }
+function delGame(id) { if (confirm('Obrisati igru iz povijesti? Statistika igrača će se promijeniti.')) { if (db.games.find(g => g.id === id)?.from) { (acc.drop ??= []).push(id); saveAcc(); } // else the next pull brings it back
+  db.games = db.games.filter(g => g.id !== id); histId = null; draft = null; save(); render(); } }
 
 async function exportBackup() {
   const file = new File([JSON.stringify(db)], `bela-blok-${new Date().toISOString().slice(0, 10)}.json`, { type: 'application/json' });
@@ -1089,7 +1090,6 @@ function logout() { acc = { sent: {} }; saveAcc(); linkId = null; render(); }
 // missed offline goes up on the next save, start or 'online'. Unlinked players are stored as "x".
 // shortcut: sent is per phone, so a second account logging in here uploads the same games again; fine for one scorer per phone.
 let syncing = false, again = false;
-const hash = s => { let h = 0; for (let i = 0; i < s.length; i++) h = h * 31 + s.charCodeAt(i) | 0; return h.toString(36); };
 async function sync() {
   if (!me() || !verified()) return;
   if (syncing) { again = true; return; }
@@ -1097,9 +1097,10 @@ async function sync() {
   try {
     const want = {};
     for (const g of db.games) {
-      const teams = g.teams.map(t => t.map(id => db.players.find(p => p.id === id)?.uid || 'x'));
+      if (g.from) continue; // brought in from another phone: its scorer uploads it
+      const names = g.teams.map(t => t.map(pname)), teams = g.teams.map(t => t.map(id => db.players.find(p => p.id === id)?.uid || 'x'));
       const uids = [...new Set(teams.flat())].filter(u => u !== 'x');
-      if (winner(g) != null && uids.length) want[g.id] = { by: acc.uid, date: g.date, uids, g: JSON.stringify({ id: g.id, date: g.date, target: g.target, belot: g.belot, teams, hands: g.hands }) };
+      if (winner(g) != null && uids.length) want[g.id] = { by: acc.uid, date: g.date, uids, g: JSON.stringify({ id: g.id, date: g.date, target: g.target, belot: g.belot, teams, names, hands: g.hands }) };
     }
     for (const id of new Set([...Object.keys(want), ...Object.keys(acc.sent)])) {
       const d = want[id], h = d ? hash(d.g) : undefined;
@@ -1113,17 +1114,49 @@ async function sync() {
   finally { syncing = false; if (again) { again = false; sync(); } }
 }
 
+// Every game with me in it, from any phone, as [{ by, g }]. Other people's data goes into the page: check it first.
+async function cloudGames() {
+  const res = await fs('POST', ':runQuery', { structuredQuery: { from: [{ collectionId: 'games' }],
+    where: { fieldFilter: { field: { fieldPath: 'uids' }, op: 'ARRAY_CONTAINS', value: { stringValue: acc.uid } } } } });
+  return res.filter(r => r.document?.fields?.g).map(r => { try { return { by: unval(r.document.fields.by), g: JSON.parse(unval(r.document.fields.g)) }; } catch { return null; } })
+    .filter(d => d && isId(d.by) && validBackup({ players: [], games: [d.g] }));
+}
+// Brings games scored on other phones into Povijest (mergeCloud in bela.js). Runs on start, coming back to the app,
+// 'online' and login, so a game finished on another phone shows up without doing anything.
+let pulling = false;
+async function pull() {
+  if (!me() || !verified() || !acc.name || pulling) return;
+  pulling = true;
+  try {
+    await autoLink();
+    if (mergeCloud(db, await cloudGames(), acc, uid)) { save(); render(); }
+  } catch (e) { console.warn('pull', e); }
+  finally { pulling = false; }
+}
+// A player named like an account's username is linked to it on its own (unless it was unlinked by hand: noAuto).
+const noAcct = new Set(); // names looked up this session that have no account free to link
+async function autoLink() {
+  if (!me()) return;
+  let n = 0;
+  for (const p of db.players) {
+    const k = p.name.trim().toLowerCase();
+    if (p.uid || p.guest || p.noAuto || !nameOk(k) || noAcct.has(k)) continue;
+    try {
+      const d = await fs('GET', '/usernames/' + k), u = unval(d.fields.uid);
+      if (db.players.some(x => x.uid === u)) noAcct.add(k);
+      else { Object.assign(p, { uid: u, acct: unval(d.fields.name) }); n++; }
+    } catch (e) { if (e.status === 404) noAcct.add(k); else if (!e.status) throw e; }
+  }
+  if (n) { save(); render(); } // save uploads that player's games right away
+}
+
 // Račun page. af keeps what was typed when the page redraws (not the password).
 let accTab = 'login', accErr = '', mine = null;
 const af = { email: '', name: '' };
 async function loadMine() { // every game with me in it, from any phone
   mine = 'load';
   try {
-    const res = await fs('POST', ':runQuery', { structuredQuery: { from: [{ collectionId: 'games' }],
-      where: { fieldFilter: { field: { fieldPath: 'uids' }, op: 'ARRAY_CONTAINS', value: { stringValue: acc.uid } } } } });
-    const games = res.filter(r => r.document?.fields?.g).map(r => { try { return JSON.parse(unval(r.document.fields.g)); } catch { return null; } })
-      .filter(g => g && validBackup({ players: [], games: [g] })); // other people's data goes into the page: check it first
-    mine = allStats(games)[acc.uid] ?? blank();
+    mine = allStats((await cloudGames()).map(d => d.g))[acc.uid] ?? blank();
   } catch (e) { mine = { err: msg(e) }; }
   if (view === 'account') render();
 }
@@ -1144,9 +1177,9 @@ function accountView() {
     if (mine == null) loadMine();
     return `<h2>${esc(u.name)}</h2><p class="st" style="margin-top:-6px">${esc(u.email)}</p>
       <div class="hhead"><h2>Moja statistika</h2><button class="link" onclick="loadMine();render()">osvježi</button></div>
-      <p class="st" style="margin-top:-4px">Sve završene igre u kojima je tvoj igrač povezan s ovim računom, s bilo kojeg mobitela.</p>
+      <p class="st" style="margin-top:-4px">Sve završene igre u kojima je tvoj igrač povezan s ovim računom, s bilo kojeg mobitela. Igre s tuđih mobitela stižu i u tvoju Povijest.</p>
       <div class="line">${mine === 'load' ? '<p class="muted">Učitavam…</p>' : mine.err ? `<p class="bad">${esc(mine.err)}</p>` : statLines(mine)}</div>
-      <p class="st">Na stranici Igrači dodirni ☁ uz igrača i upiši njegovo korisničko ime: njegove igre s ovog mobitela ulaze u njegovu statistiku.</p>
+      <p class="st">Na stranici Igrači dodirni ☁ uz igrača i upiši njegovo korisničko ime: njegove igre s ovog mobitela ulaze u njegovu statistiku i povijest. Igrač s istim imenom kao nečije korisničko ime poveže se sam.</p>
       <button class="btn wide" style="width:100%;margin-top:16px" onclick="logout()">Odjava</button>
       <details class="day" style="margin-top:20px"><summary class="bad">Obriši račun</summary>
         <p class="st">Briše račun, korisničko ime i sve igre koje si poslao u oblak. Igre i igrači na ovom mobitelu ostaju. Ne može se poništiti.</p>
@@ -1176,9 +1209,9 @@ const accSubmit = e => busy(e, async () => {
   signedIn(await idt(accTab === 'reg' ? 'signUp' : 'signInWithPassword', { email, password, returnSecureToken: true }));
   mine = null;
   if (accTab === 'reg') { acc.want = af.name.trim(); saveAcc(); await idt('sendOobCode', { requestType: 'VERIFY_EMAIL', idToken: acc.token }); }
-  sync();
+  sync(); pull();
 });
-const accName = e => busy(e, async () => { await setName(af.name.trim()); sync(); });
+const accName = e => busy(e, async () => { await setName(af.name.trim()); sync(); pull(); });
 const sendVerify = () => busy(null, async () => {
   await idt('sendOobCode', { requestType: 'VERIFY_EMAIL', idToken: await token() });
   alert('Poslali smo novu poveznicu.');
@@ -1188,7 +1221,7 @@ const checkVerified = () => busy(null, async () => {
   await token(true); // a fresh token carries the new email_verified
   if (!verified()) throw new Error('E-mail još nije potvrđen. Otvori poveznicu iz e-maila pa pokušaj ponovno.');
   if (!acc.name && acc.want) { af.name = acc.want; await setName(acc.want); } // if it fails, the page asks for another name
-  sync();
+  sync(); pull();
 });
 const delAccount = e => busy(e, async () => {
   if (!confirm('Trajno obrisati račun? Ovo se ne može poništiti.')) return;
@@ -1216,7 +1249,7 @@ async function linkPlayer(e, id) {
   try {
     const d = await fs('GET', '/usernames/' + n.toLowerCase()), uid = unval(d.fields.uid), other = db.players.find(x => x.uid === uid && x.id !== id);
     if (other) throw new Error(`Taj račun je već povezan s igračem ${other.name}.`);
-    Object.assign(db.players.find(x => x.id === id), { uid, acct: unval(d.fields.name) });
+    Object.assign(db.players.find(x => x.id === id), { uid, acct: unval(d.fields.name), noAuto: undefined });
     linkId = null; save();
   } catch (err) { alert(err.status === 404 ? `Nema računa „${n}”.` : msg(err)); }
   prows();
@@ -1224,7 +1257,7 @@ async function linkPlayer(e, id) {
 function unlink(id) {
   const p = db.players.find(x => x.id === id);
   if (!confirm(`Odspojiti ${p.name} od računa ${p.acct}? Igre s ovog mobitela više mu se neće brojati.`)) return;
-  delete p.uid; delete p.acct; save(); prows();
+  delete p.uid; delete p.acct; p.noAuto = true; save(); prows(); // noAuto: autoLink must not link it again
 }
 
 $('#hfan').innerHTML = fan();
@@ -1233,7 +1266,7 @@ applyTheme(); render();
 // keep the dealing animation up a little while on start (long enough for one card to fall and come back), then fade out
 setTimeout(() => { $('#loader').classList.add('out'); setTimeout(() => $('#loader').remove(), 300); }, Math.max(0, 1300 - performance.now()));
 addEventListener('resize', placeInd);
-sync(); addEventListener('online', sync); // upload anything left over from offline
+sync(); pull(); addEventListener('online', () => { sync(); pull(); }); // upload anything left over from offline
 addEventListener('keydown', e => { if (e.key === 'Escape' && (pickDealer || fopen)) { pickDealer = fopen = false; render(); } }); document.fonts?.ready.then(placeInd);
 if ('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js').catch(() => {});
 navigator.storage?.persist?.().catch(() => {}); // ask iOS not to clear players and games when space runs low
@@ -1242,7 +1275,9 @@ navigator.storage?.persist?.().catch(() => {}); // ask iOS not to clear players 
 const pageTag = () => fetch(location.pathname, { method: 'HEAD', cache: 'no-store' }).then(r => r.headers.get('etag') || r.headers.get('last-modified')).catch(() => null);
 let tag0 = null; pageTag().then(t => tag0 = t);
 document.addEventListener('visibilitychange', async () => {
-  if (document.visibilityState !== 'visible' || !tag0) return;
+  if (document.visibilityState !== 'visible') return;
+  pull(); // games finished on another phone meanwhile
+  if (!tag0) return;
   const t = await pageTag();
   if (t && t !== tag0 && !draft) location.reload(); // never throw away a hand that's being typed
 });

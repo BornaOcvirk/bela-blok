@@ -29,6 +29,43 @@ function winner(game) {
 // New game: rotation carries on, but the first dealer must be on the team that just won (seats 0,2 = MI, 1,3 = VI).
 const firstDealer = (next, w) => next % 2 === w ? next : (next + 1) % 4;
 
+const hash = s => { let h = 0; for (let i = 0; i < s.length; i++) h = h * 31 + s.charCodeAt(i) | 0; return h.toString(36); };
+
+// Brings games scored on other phones that include me into db. docs = [{ by, g }] from the cloud, already checked;
+// g.teams holds account uids ('x' = not linked) and g.names the names on the scorer's phone. New games are added,
+// ones the scorer edited are replaced, ones they deleted are removed, ids in me.drop (deleted here) stay out.
+// Each slot becomes: the local player linked to that account, else (me) my player, else a local player with the
+// same name not linked to another account, else a new guest. Returns true if db changed.
+function mergeCloud(db, docs, me, newId) {
+  const low = s => s.toLowerCase(), seen = new Set();
+  const slot = (u, name) => {
+    name = typeof name === 'string' && name.trim() ? name.trim().slice(0, 30) : '?';
+    let p = u !== 'x' && db.players.find(x => x.uid === u);
+    if (!p && u === me.uid) {
+      p = db.players.find(x => !x.uid && !x.guest && low(x.name) === low(me.name));
+      if (p) Object.assign(p, { uid: u, acct: me.name });
+      else db.players.push(p = { id: newId(), name: me.name, uid: u, acct: me.name });
+    }
+    p ||= db.players.find(x => !x.uid && low(x.name) === low(name));
+    if (!p) db.players.push(p = { id: newId(), name, guest: true });
+    return p.id;
+  };
+  let changed = false;
+  for (const { by, g } of docs) {
+    if (by === me.uid) continue; // scored on this account: it is already here
+    const id = by + g.id, h = hash(JSON.stringify(g)), old = db.games.find(x => x.id === id);
+    seen.add(id);
+    if (me.drop?.includes(id) || old?.h === h) continue;
+    const game = { id, date: g.date, target: g.target, belot: g.belot ?? null, hands: g.hands, from: by, h,
+      teams: g.teams.map((t, i) => t.map((u, j) => slot(u, g.names?.[i]?.[j]))) };
+    if (old) Object.assign(old, game); else db.games.push(game);
+    changed = true;
+  }
+  const keep = db.games.filter(x => !x.from || seen.has(x.id));
+  if (keep.length !== db.games.length) { db.games = keep; changed = true; }
+  return changed;
+}
+
 // Checks an imported backup before it replaces the data. Ids go into onclick attributes, so they must be plain.
 const isId = v => typeof v === 'string' && /^[a-z0-9]+$/i.test(v);
 const isPair = a => Array.isArray(a) && a.length === 2;
@@ -126,4 +163,4 @@ function sortPlayers(rows, { sort = 'w', desc = true, filter = '', min = 0 } = {
   return rows.filter(r => !STAT[filter] || STAT[filter](r.s) >= min).sort((a, b) => (desc ? -cmp(a, b) : cmp(a, b)) || byName(a, b));
 }
 
-if (typeof module !== 'undefined') module.exports = { scoreHand, totals, winner, firstDealer, validBackup, bracket, seedOrder, thirdPlace, roundRobin, matchList, standings, champion, liveWins, sortPlayers, HAND };
+if (typeof module !== 'undefined') module.exports = { scoreHand, totals, winner, firstDealer, hash, mergeCloud, validBackup, bracket, seedOrder, thirdPlace, roundRobin, matchList, standings, champion, liveWins, sortPlayers, HAND };
