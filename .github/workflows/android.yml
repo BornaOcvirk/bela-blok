@@ -1,0 +1,65 @@
+# Builds the Android app on a GitHub Linux machine and publishes BelaBlok.apk as the "android" release.
+# Signed with a fixed key (repo secret ANDROID_KEYSTORE = base64 of android-signing.keystore, kept local), so a new APK installs over the old one
+# and keeps the saved games (a different key would force an uninstall, which wipes them).
+name: Android app
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 21
+      - run: npm ci
+      - run: npm test
+      - run: node make-icon.js splash
+      - name: Stamp version on bela.js (an updated app must not run an old cached copy)
+        run: sed -i "s/bela\.js?v=[a-z0-9]*/bela.js?v=${GITHUB_SHA::7}/" docs/index.html && grep -o 'bela.js?v=[a-z0-9]*' docs/index.html
+
+      - name: Create Android project
+        run: |
+          npx cap add android
+          res=android/app/src/main/res
+          for f in $res/mipmap-*/ic_launcher*.png; do cp docs/icon-512.png "$f"; done
+          for f in $res/drawable*/splash.png; do cp native/splash.png "$f"; done
+          # Adaptive icon: the square icon shrunk into the safe zone on felt green, so the fan is never cropped.
+          for n in ic_launcher ic_launcher_round; do cat > $res/mipmap-anydpi-v26/$n.xml <<'EOF'
+          <?xml version="1.0" encoding="utf-8"?>
+          <adaptive-icon xmlns:android="http://schemas.android.com/apk/res/android">
+            <background android:drawable="@color/ic_launcher_background"/>
+            <foreground><inset android:drawable="@mipmap/ic_launcher_foreground" android:inset="20%"/></foreground>
+          </adaptive-icon>
+          EOF
+          done
+          sed -i 's/#[0-9A-Fa-f]\{6\}/#1B4332/' $res/values/ic_launcher_background.xml
+          npx cap sync android
+
+      - name: Build .apk
+        env:
+          KEYSTORE: ${{ secrets.ANDROID_KEYSTORE }}
+        run: |
+          [ -n "$KEYSTORE" ] || { echo "::error::Add the ANDROID_KEYSTORE secret (see README)"; exit 1; }
+          mkdir -p ~/.android && echo "$KEYSTORE" | base64 -d > ~/.android/debug.keystore
+          cd android && ./gradlew assembleDebug --no-daemon
+          cp app/build/outputs/apk/debug/app-debug.apk ../BelaBlok.apk
+
+      - name: Publish release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release delete android --yes --cleanup-tag || true
+          gh release create android BelaBlok.apk --target "$GITHUB_SHA" --title "Bela Blok – Android app" \
+            --notes "Preuzmi BelaBlok.apk na Android mobitel i otvori ga (dopusti instalaciju iz nepoznatih izvora)."

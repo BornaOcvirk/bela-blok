@@ -3,3 +3,7 @@ node_modules/
 ios/
 native/
 build/
+# generated in CI (see .github/workflows/android.yml)
+android/
+# Android signing key: kept local, CI gets it from the ANDROID_KEYSTORE secret
+*.keystore

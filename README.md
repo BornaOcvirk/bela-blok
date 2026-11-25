@@ -21,6 +21,13 @@ igrači koji se miješaju u parove i statistika po igraču. Svijetla i tamna tem
 2. Na iPhoneu u Safariju otvori `https://bornaocvirk.github.io/bela-blok/`.
 3. **Dijeli → Dodaj na početni zaslon**. Radi i bez interneta, ne istječe.
 
+## Instalacija na Android
+1. Na mobitelu preuzmi **BelaBlok.apk** s [Releases → android](../../releases/tag/android) (gradi se na svaki push).
+2. Otvori ga i dopusti instalaciju iz nepoznatih izvora. Nova verzija se instalira preko stare, podaci ostaju.
+
+> Gradnja treba tajni ključ: **Settings → Secrets and variables → Actions → `ANDROID_KEYSTORE`** = base64 od
+> `android-signing.keystore` (čuva se samo lokalno, nije u gitu – ako se izgubi, sljedeća verzija traži deinstalaciju).
+
 ## Račun (nije obavezan)
 Sve radi i bez računa. Račun samo dodaje oblak: tko se registrira, dobije korisničko ime, a kad ga netko na svom
 mobitelu poveže s igračem (**Igrači → ☁ → korisničko ime**), završene igre tog igrača šalju se u oblak.
